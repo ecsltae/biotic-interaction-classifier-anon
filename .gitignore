@@ -1,0 +1,172 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Model files (too large for git)
+models/*.pkl
+models/*.h5
+models/*.pt
+models/*.pth
+models/*.bin
+models/*.ckpt
+models/transformer_*/
+models/bert_classifier/
+models/llama3_*/
+models/luke_*/
+
+# Large data files
+data/taxonomies/*.json
+data/raw/*.txt
+data/raw/*.csv
+data/processed/*.txt
+data/processed/unique_sentences.csv
+data/processed/species_dict.csv
+
+# Results (optional - you can track these if small)
+results/predictions/*.csv
+results/predictions/*.xlsx
+results/figures/*.png
+
+# Logs
+*.log
+logs/
+luke_logs/
+luke_results/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+tampon*.py
+
+# API keys and secrets
+.env
+secrets.py
+credentials.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Old versions (keep only current in src/)
+*[0-9].py
+*_old.py
+*_backup.py
+*_test.py
+apitryout.py
+archive_old_files/*.txt
+
+# Cache directories
+data/pmc_cache/
+data/sibils_cache/
+data/external_db_cache/
+data/article_cache/
+data/external/
+data/globi/
+data/schemas/
+
+# Training data (large versioned CSVs/JSONs — not suited for git)
+data/training/*.csv
+data/training/*.json
+data/training/v*/*.csv
+data/training/v*/*.json
+
+# Reference data
+data/species_names_cache.json
+data/domain_rules.json
+ncbi_taxon_viruses_full_v3.json
+globi-relax_passages-triplets_2024-02-28_curation_EP.tsv
+
+# Generated prediction/evaluation outputs
+data/evaluation/*.csv
+data/evaluation/*.xlsx
+data/processed/*.csv
+# Exceptions: final test set + its raw synthetic-source inputs (small, needed for reproducibility)
+!data/evaluation/biotic_interaction_test_set.csv
+!data/evaluation/gen_set_100.csv
+!data/evaluation/gen_set_150_extension_kept97.csv
+
+# Figures (generated) — top-level dir only, not manuscript/figures/
+/figures/
+!manuscript/figures/
+!manuscript/figures/*.png
+
+# Manuscript build outputs
+manuscript/*.aux
+manuscript/*.out
+manuscript/*.pdf
+manuscript/*.log
+manuscript/*.toc
+manuscript/*.fls
+manuscript/*.fdb_latexmk
+
+# Trained model directories (root-level only)
+/models/
+/ensemble_model_v3/
+/transformer_BiomedBERT_model/
+/transformer_roberta_model/
+
+# Old top-level API scripts (replaced by api/ directory)
+api_ensemble.py
+api_scibert.py
+
+# Generated analysis outputs
+analysis/
+
+# Training results (large, generated)
+transformer_cv_results.csv
+transformer_eval_results.csv
+results/flan_t5*/
+results/flan-t5-*/
+results/bart-large*/
+results/biobart-large*/
+results/biogpt*/
+results/overnight*/
+results/research_agent/
+results/predictions/
+results/figures/
+results/reports/
+
+# Presentation materials
+presentation/
+data/training/curation.db

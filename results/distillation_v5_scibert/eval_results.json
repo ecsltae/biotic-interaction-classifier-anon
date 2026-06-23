@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Student distilled \u2014 EP-relax",
+    "f1": 0.7927927927927928,
+    "prec": 0.6984126984126984,
+    "rec": 0.9166666666666666,
+    "threshold": 0.25000000000000006
+  },
+  {
+    "name": "Student distilled \u2014 eval_100",
+    "f1": 0.5915492957746479,
+    "prec": 0.525,
+    "rec": 0.6774193548387096,
+    "threshold": 0.25000000000000006
+  },
+  {
+    "name": "Student distilled \u2014 synthetic_gold_100",
+    "f1": 0.98,
+    "prec": 0.98,
+    "rec": 0.98,
+    "threshold": 0.6500000000000001
+  }
+]

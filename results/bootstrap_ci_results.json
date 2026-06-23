@@ -1,0 +1,204 @@
+{
+  "dataset": "biotic_interaction_test_set (499 sentences, 254 positives)",
+  "point_metrics": {
+    "multitask_champion": {
+      "f1": 0.8073,
+      "precision": 0.8326,
+      "recall": 0.7835,
+      "auc": 0.8633,
+      "threshold": 0.09
+    },
+    "multitask_hardce": {
+      "f1": 0.7137,
+      "precision": 0.7804,
+      "recall": 0.6575,
+      "auc": 0.799,
+      "threshold": 0.51
+    },
+    "distilled_v2": {
+      "f1": 0.8008,
+      "precision": 0.8277,
+      "recall": 0.7756,
+      "auc": 0.8816,
+      "threshold": 0.25
+    },
+    "ensemble": {
+      "f1": 0.8499,
+      "precision": 0.9178,
+      "recall": 0.7913,
+      "auc": 0.925,
+      "threshold": 0.32
+    },
+    "BiomedBERT_v7": {
+      "f1": 0.8645,
+      "precision": 0.875,
+      "recall": 0.8543,
+      "auc": 0.9277,
+      "threshold": 0.5
+    }
+  },
+  "bootstrap_ci": {
+    "multitask_champion": {
+      "f1_mean": 0.8068125007721638,
+      "f1_ci": [
+        0.7675413096695227,
+        0.843424760762331
+      ],
+      "p_mean": 0.8324379138860045,
+      "p_ci": [
+        0.7842323651452282,
+        0.8779551565200691
+      ],
+      "r_mean": 0.7833127067379566,
+      "r_ci": [
+        0.732,
+        0.83203125
+      ],
+      "n_boot": 10000
+    },
+    "multitask_hardce": {
+      "f1_mean": 0.7134530298000138,
+      "f1_ci": [
+        0.6651982378854625,
+        0.7583333333333333
+      ],
+      "p_mean": 0.7806068243090235,
+      "p_ci": [
+        0.7232108516483516,
+        0.8341715051943656
+      ],
+      "r_mean": 0.657678219294708,
+      "r_ci": [
+        0.5984244062865636,
+        0.7158682069775243
+      ],
+      "n_boot": 10000
+    },
+    "distilled_v2": {
+      "f1_mean": 0.8006352100797026,
+      "f1_ci": [
+        0.7603287935312283,
+        0.8382066276803118
+      ],
+      "p_mean": 0.8280710909369551,
+      "p_ci": [
+        0.7782426778242678,
+        0.8744769874476988
+      ],
+      "r_mean": 0.775573283404135,
+      "r_ci": [
+        0.7235729112610275,
+        0.8249027237354085
+      ],
+      "n_boot": 10000
+    },
+    "ensemble": {
+      "f1_mean": 0.8495543940254835,
+      "f1_ci": [
+        0.8137044967880086,
+        0.8824742268041237
+      ],
+      "p_mean": 0.9177330766706444,
+      "p_ci": [
+        0.8796296296296297,
+        0.9523809523809523
+      ],
+      "r_mean": 0.791273248423907,
+      "r_ci": [
+        0.7403100775193798,
+        0.8403041825095057
+      ],
+      "n_boot": 10000
+    },
+    "BiomedBERT_v7": {
+      "f1_mean": 0.8643408386002875,
+      "f1_ci": [
+        0.8313253012048193,
+        0.8948374760994264
+      ],
+      "p_mean": 0.8749476775699228,
+      "p_ci": [
+        0.8311688311688312,
+        0.9147286821705426
+      ],
+      "r_mean": 0.8544456160145403,
+      "r_ci": [
+        0.8104838709677419,
+        0.896
+      ],
+      "n_boot": 10000
+    }
+  },
+  "mcnemar": {
+    "multitask_champion_vs_multitask_hardce": {
+      "n01": 75,
+      "n10": 36,
+      "chi2": 13.00900900900901,
+      "p_value": 0.00030999595216563147,
+      "note": "A correct & B wrong=75; B correct & A wrong=36; total disagree=111"
+    },
+    "multitask_champion_vs_distilled_v2": {
+      "n01": 45,
+      "n10": 42,
+      "chi2": 0.04597701149425287,
+      "p_value": 0.8302175917778634,
+      "note": "A correct & B wrong=45; B correct & A wrong=42; total disagree=87"
+    },
+    "multitask_champion_vs_ensemble": {
+      "n01": 23,
+      "n10": 47,
+      "chi2": 7.557142857142857,
+      "p_value": 0.005977268092463461,
+      "note": "A correct & B wrong=23; B correct & A wrong=47; total disagree=70"
+    },
+    "multitask_champion_vs_BiomedBERT_v7": {
+      "n01": 28,
+      "n10": 55,
+      "chi2": 8.144578313253012,
+      "p_value": 0.004319009781788452,
+      "note": "A correct & B wrong=28; B correct & A wrong=55; total disagree=83"
+    },
+    "multitask_hardce_vs_distilled_v2": {
+      "n01": 47,
+      "n10": 83,
+      "chi2": 9.423076923076923,
+      "p_value": 0.002142716851285198,
+      "note": "A correct & B wrong=47; B correct & A wrong=83; total disagree=130"
+    },
+    "multitask_hardce_vs_ensemble": {
+      "n01": 30,
+      "n10": 93,
+      "chi2": 31.252032520325205,
+      "p_value": 2.2661010734559284e-08,
+      "note": "A correct & B wrong=30; B correct & A wrong=93; total disagree=123"
+    },
+    "multitask_hardce_vs_BiomedBERT_v7": {
+      "n01": 38,
+      "n10": 104,
+      "chi2": 29.753521126760564,
+      "p_value": 4.9061438800457324e-08,
+      "note": "A correct & B wrong=38; B correct & A wrong=104; total disagree=142"
+    },
+    "distilled_v2_vs_ensemble": {
+      "n01": 37,
+      "n10": 64,
+      "chi2": 6.693069306930693,
+      "p_value": 0.009678842685126088,
+      "note": "A correct & B wrong=37; B correct & A wrong=64; total disagree=101"
+    },
+    "distilled_v2_vs_BiomedBERT_v7": {
+      "n01": 29,
+      "n10": 59,
+      "chi2": 9.556818181818182,
+      "p_value": 0.0019920810156718316,
+      "note": "A correct & B wrong=29; B correct & A wrong=59; total disagree=88"
+    },
+    "ensemble_vs_BiomedBERT_v7": {
+      "n01": 23,
+      "n10": 26,
+      "chi2": 0.08163265306122448,
+      "p_value": 0.7750969621959847,
+      "note": "A correct & B wrong=23; B correct & A wrong=26; total disagree=49"
+    }
+  }
+}

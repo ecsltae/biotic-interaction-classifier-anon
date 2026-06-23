@@ -1,0 +1,232 @@
+{
+  "model": "classifier/models/flan_t5_v12",
+  "is_enriched": false,
+  "device": "cuda",
+  "benchmarks": [
+    {
+      "name": "gen_set_100",
+      "description": "Synthetic gen_set_100: explicit sentences by category & difficulty",
+      "n": 100,
+      "n_pos": 60,
+      "pct_pos": 60.0,
+      "f1_optimal": {
+        "threshold": 0.05,
+        "precision": 0.939,
+        "recall": 0.517,
+        "f1": 0.667,
+        "tn": 38,
+        "fp": 2,
+        "fn": 29,
+        "tp": 31,
+        "n_positive_predicted": 33
+      },
+      "prec_optimal": {
+        "threshold": 0.5,
+        "precision": 0.938,
+        "recall": 0.5,
+        "f1": 0.652,
+        "tn": 38,
+        "fp": 2,
+        "fn": 30,
+        "tp": 30,
+        "n_positive_predicted": 32
+      },
+      "breakdown": {
+        "difficulty": {
+          "easy": {
+            "n": 75,
+            "pos": 45,
+            "f1": 0.686,
+            "precision": 0.96,
+            "recall": 0.533
+          },
+          "hard": {
+            "n": 15,
+            "pos": 5,
+            "f1": 0.5,
+            "precision": 0.667,
+            "recall": 0.4
+          },
+          "medium": {
+            "n": 10,
+            "pos": 10,
+            "f1": 0.667,
+            "precision": 1.0,
+            "recall": 0.5
+          }
+        },
+        "category": {
+          "background": {
+            "n": 5,
+            "pos": 0,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0
+          },
+          "borderline": {
+            "n": 10,
+            "pos": 0,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0
+          },
+          "competition": {
+            "n": 2,
+            "pos": 2,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0
+          },
+          "ectoparasitism": {
+            "n": 5,
+            "pos": 5,
+            "f1": 0.75,
+            "precision": 1.0,
+            "recall": 0.6
+          },
+          "endoparasitism": {
+            "n": 5,
+            "pos": 5,
+            "f1": 0.75,
+            "precision": 1.0,
+            "recall": 0.6
+          },
+          "epidemiology": {
+            "n": 5,
+            "pos": 0,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0
+          },
+          "generic": {
+            "n": 5,
+            "pos": 0,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0
+          },
+          "herbivory": {
+            "n": 5,
+            "pos": 5,
+            "f1": 0.571,
+            "precision": 1.0,
+            "recall": 0.4
+          },
+          "host-pathogen": {
+            "n": 5,
+            "pos": 5,
+            "f1": 0.889,
+            "precision": 1.0,
+            "recall": 0.8
+          },
+          "indirect": {
+            "n": 7,
+            "pos": 7,
+            "f1": 0.6,
+            "precision": 1.0,
+            "recall": 0.429
+          },
+          "methodology": {
+            "n": 5,
+            "pos": 0,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0
+          },
+          "mutualism": {
+            "n": 5,
+            "pos": 5,
+            "f1": 0.571,
+            "precision": 1.0,
+            "recall": 0.4
+          },
+          "pollination": {
+            "n": 3,
+            "pos": 3,
+            "f1": 1.0,
+            "precision": 1.0,
+            "recall": 1.0
+          },
+          "predation": {
+            "n": 6,
+            "pos": 6,
+            "f1": 0.286,
+            "precision": 1.0,
+            "recall": 0.167
+          },
+          "reservoir": {
+            "n": 5,
+            "pos": 5,
+            "f1": 0.75,
+            "precision": 1.0,
+            "recall": 0.6
+          },
+          "seed-dispersal": {
+            "n": 2,
+            "pos": 2,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0
+          },
+          "taxonomy": {
+            "n": 5,
+            "pos": 0,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0
+          },
+          "treatment": {
+            "n": 5,
+            "pos": 0,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0
+          },
+          "vector-borne": {
+            "n": 5,
+            "pos": 5,
+            "f1": 0.571,
+            "precision": 1.0,
+            "recall": 0.4
+          },
+          "zoonosis": {
+            "n": 5,
+            "pos": 5,
+            "f1": 1.0,
+            "precision": 1.0,
+            "recall": 1.0
+          }
+        }
+      }
+    },
+    {
+      "name": "ep_relax",
+      "description": "EP-relax (primary): GloBI-relax retrieval, mixed difficulty",
+      "n": 100,
+      "n_pos": 48,
+      "pct_pos": 48.0,
+      "f1_optimal": {
+        "threshold": 0.67,
+        "precision": 0.737,
+        "recall": 0.875,
+        "f1": 0.8,
+        "tn": 37,
+        "fp": 15,
+        "fn": 6,
+        "tp": 42,
+        "n_positive_predicted": 57
+      },
+      "prec_optimal": {
+        "threshold": 0.67,
+        "precision": 0.737,
+        "recall": 0.875,
+        "f1": 0.8,
+        "tn": 37,
+        "fp": 15,
+        "fn": 6,
+        "tp": 42,
+        "n_positive_predicted": 57
+      }
+    }
+  ]
+}

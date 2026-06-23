@@ -1,0 +1,159 @@
+\begin{thebibliography}{23}
+\providecommand{\natexlab}[1]{#1}
+
+\bibitem[{Aho and Corasick(1975)}]{aho1975efficient}
+Alfred~V Aho and Margaret~J Corasick. 1975.
+\newblock Efficient string matching: An aid to bibliographic search.
+\newblock \emph{Communications of the ACM}, 18(6):333--340.
+
+\bibitem[{Badenes-P{\'e}rez et~al.(2020)Badenes-P{\'e}rez, Ponce-Gordo, and
+  Cano-Maque}]{badenes2020detecting}
+Francisco~R Badenes-P{\'e}rez, Francisco Ponce-Gordo, and Lucila Cano-Maque.
+  2020.
+\newblock Detecting biotic interactions in the literature.
+\newblock \emph{Ecological Indicators}, 119:106876.
+
+\bibitem[{Bucilu{\u{a}} et~al.(2006)Bucilu{\u{a}}, Caruana, and
+  Niculescu-Mizil}]{bucilua2006model}
+Cristian Bucilu{\u{a}}, Rich Caruana, and Alexandru Niculescu-Mizil. 2006.
+\newblock Model compression.
+\newblock In \emph{Proceedings of the 12th ACM SIGKDD International Conference
+  on Knowledge Discovery and Data Mining (KDD)}, pages 535--541.
+
+\bibitem[{Bunescu et~al.(2005)Bunescu, Ge, Kate, Marcotte, Mooney, Ramani, and
+  Wong}]{bunescu2005comparative}
+Razvan~C Bunescu, Ruifang Ge, Rohit~J Kate, Edward~M Marcotte, Raymond~J
+  Mooney, Arun~K Ramani, and Yuk~Wah Wong. 2005.
+\newblock A comparative study of kernels for protein-protein interaction
+  extraction.
+\newblock In \emph{Proceedings of the SMBM}.
+
+\bibitem[{Chen et~al.(2023)Chen, Zhang, and Zhang}]{chen2023biodiversity}
+Huajun Chen, Wen Zhang, and Ningyu Zhang. 2023.
+\newblock Knowledge graphs for biodiversity: challenges and opportunities.
+\newblock \emph{Briefings in Bioinformatics}, 24(3).
+
+\bibitem[{Chung et~al.(2022)Chung, Hou, Longpre, Zoph, Tay, Fedus, Li, Wang,
+  Dehghani, Brahma et~al.}]{chung2022scaling}
+Hyung~Won Chung, Le~Hou, Shayne Longpre, Barret Zoph, Yi~Tay, William Fedus,
+  Eric Li, Xuezhi Wang, Mostafa Dehghani, Siddhartha Brahma, and 1 others.
+  2022.
+\newblock Scaling instruction-finetuned language models.
+\newblock \emph{arXiv preprint arXiv:2210.11416}.
+
+\bibitem[{Efron and Tibshirani(1993)}]{efron1993introduction}
+Bradley Efron and Robert~J Tibshirani. 1993.
+\newblock \emph{An introduction to the bootstrap}.
+\newblock Chapman \& Hall.
+
+\bibitem[{Gardette et~al.(2024)Gardette, Sklab, Belda, Chenin, and
+  Zucker}]{gardette2024metaplantcode}
+Aur{\'e}lien Gardette, Yanis Sklab, Eugeni Belda, Eric Chenin, and Jean-Daniel
+  Zucker. 2024.
+\newblock \href {https://doi.org/10.3897/biss.8.135729} {{METAPLANTCODE}:
+  Harmonizing plant metabarcoding pipelines in europe}.
+\newblock \emph{Biodiversity Information Science and Standards}, 8:e135729.
+
+\bibitem[{Gobeill et~al.(2020)Gobeill, Caucheteur, Michel, Mottin, Pasche, and
+  Ruch}]{mottin2021sibils}
+Julien Gobeill, D{\'e}borah Caucheteur, Pierre-Andr{\'e} Michel, Luc Mottin,
+  Emilie Pasche, and Patrick Ruch. 2020.
+\newblock {SIB} literature services: {RESTful} customizable search engines in
+  biomedical literature, enriched with automatically mapped biomedical
+  concepts.
+\newblock \emph{Nucleic Acids Research}, 48(W1):W12--W16.
+
+\bibitem[{Gu et~al.(2021)Gu, Tinn, Cheng, Lucas, Usuyama, Liu, Naumann, Gao,
+  and Peng}]{gu2021domain}
+Yu~Gu, Robert Tinn, Hao Cheng, Michael Lucas, Naoto Usuyama, Xiaodong Liu,
+  Tristan Naumann, Jianfeng Gao, and Jinfeng Peng. 2021.
+\newblock Domain-specific language model pretraining for biomedical natural
+  language processing.
+\newblock \emph{ACM Transactions on Computing for Healthcare}, 3(1):1--23.
+
+\bibitem[{Habibi et~al.(2017)Habibi, Weber, Neves, Wiegandt, and
+  Leser}]{habibi2017deep}
+Maryam Habibi, Leon Weber, Mariana Neves, David~L Wiegandt, and Ulf Leser.
+  2017.
+\newblock Deep learning with word embeddings improves biomedical named entity
+  recognition.
+\newblock In \emph{Bioinformatics}, volume~33, pages i37--i48.
+
+\bibitem[{Hinton et~al.(2015)Hinton, Vinyals, and Dean}]{hinton2015distilling}
+Geoffrey Hinton, Oriol Vinyals, and Jeff Dean. 2015.
+\newblock Distilling the knowledge in a neural network.
+\newblock In \emph{NIPS Deep Learning and Representation Learning Workshop}.
+
+\bibitem[{Lim et~al.(2018)Lim, Lee, Choi, and Kang}]{lim2018drug}
+Sangrak Lim, Kyubum Lee, Kihyun Choi, and Jaewoo Kang. 2018.
+\newblock Drug-drug interaction extraction from the literature using a
+  recursive neural network.
+\newblock \emph{PloS ONE}, 13(1):e0190926.
+
+\bibitem[{Liu et~al.(2019)Liu, He, Chen, and Gao}]{liu2019multi}
+Xiaodong Liu, Pengcheng He, Weizhu Chen, and Jianfeng Gao. 2019.
+\newblock Multi-task deep neural networks for natural language understanding.
+\newblock In \emph{Proceedings of ACL}, pages 4487--4496.
+
+\bibitem[{McNemar(1947)}]{mcnemar1947note}
+Quinn McNemar. 1947.
+\newblock Note on the sampling error of the difference between correlated
+  proportions or percentages.
+\newblock \emph{Psychometrika}, 12(2):153--157.
+
+\bibitem[{Mintz et~al.(2009)Mintz, Bills, Snow, and
+  Jurafsky}]{mintz2009distant}
+Mike Mintz, Steven Bills, Rion Snow, and Dan Jurafsky. 2009.
+\newblock Distant supervision for relation extraction without labeled data.
+\newblock In \emph{Proceedings of ACL-IJCNLP}, pages 1003--1011.
+
+\bibitem[{Pasche et~al.(2023)Pasche, Gobeill, Agosti, Penev, Groom, Georgiev,
+  Gaillac, Flament, Caucheteur, Michel, and Ruch}]{biodiversitypmc2024}
+Emilie Pasche, Julien Gobeill, Donat Agosti, Lyubomir Penev, Quentin Groom,
+  Teodor Georgiev, Esteban Gaillac, Alexandre Flament, D{\'e}borah Caucheteur,
+  Pierre-Andr{\'e} Michel, and Patrick Ruch. 2023.
+\newblock \href {https://doi.org/10.3897/biss.7.111660} {From {SIBiLS} to
+  biodiversity {PMC}: Foundations for the {One Health Library}}.
+\newblock \emph{Biodiversity Information Science and Standards}, 7:e111660.
+
+\bibitem[{Poelen et~al.(2014)Poelen, Simons, and Mungall}]{poelen2014global}
+Jorrit~H Poelen, James~D Simons, and Chris~J Mungall. 2014.
+\newblock Global biotic interactions: An open infrastructure to share and
+  analyze species-interaction datasets.
+\newblock \emph{Ecological Informatics}, 24:148--159.
+
+\bibitem[{Poisot et~al.(2021)Poisot, Bergeron, Cazelles, Dallas, Gravel,
+  MacDonald, Mercier, Violet, and Vissault}]{poisot2021global}
+Timoth{\'e}e Poisot, Gabriel Bergeron, Kevin Cazelles, Tad Dallas, Dominique
+  Gravel, Andrew MacDonald, Benjamin Mercier, Cl{\'e}ment Violet, and Steve
+  Vissault. 2021.
+\newblock Global knowledge gaps in species interaction networks data.
+\newblock \emph{Journal of Biogeography}, 48(7):1552--1563.
+
+\bibitem[{{Qwen Team}(2025)}]{qwen2025technical}
+{Qwen Team}. 2025.
+\newblock Qwen3 technical report.
+\newblock \emph{arXiv preprint arXiv:2505.09388}.
+
+\bibitem[{Ramshaw and Marcus(1995)}]{ramshaw1995text}
+Lance~A Ramshaw and Mitchell~P Marcus. 1995.
+\newblock Text chunking using transformation-based learning.
+\newblock In \emph{Third Workshop on Very Large Corpora}.
+
+\bibitem[{Ruch et~al.(2024)Ruch, Pasche, Michel, and
+  Caucheteur}]{sibils2023biotxplorer}
+Patrick Ruch, Emilie Pasche, Pierre-Andr{\'e} Michel, and D{\'e}borah
+  Caucheteur. 2024.
+\newblock \href {https://doi.org/10.3897/biss.8.135453} {{BiotXplorer}:
+  Navigating evidence-based biotic interactions}.
+\newblock \emph{Biodiversity Information Science and Standards}, 8:e135453.
+
+\bibitem[{Tang et~al.(2019)Tang, Lu, Liu, Mou, Vechtomova, and
+  Lin}]{tang2019distilling}
+Raphael Tang, Yao Lu, Linqing Liu, Lili Mou, Olga Vechtomova, and Jimmy Lin.
+  2019.
+\newblock Distilling task-specific knowledge from {BERT} into simple neural
+  networks.
+\newblock \emph{arXiv preprint arXiv:1903.12136}.
+
+\end{thebibliography}

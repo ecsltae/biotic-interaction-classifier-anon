@@ -1,0 +1,101 @@
+text	label	interaction_type	source
+Wolf pack sizes in Yellowstone ranged from 3 to 12 individuals during the study period.	0	monitoring	synthetic_gold
+Quercus robur and Garrulus glandarius share overlapping geographic ranges across temperate Europe.	0	cooccurrence	synthetic_gold
+Host-parasite relationships are a major driver of evolutionary arms races.	0	background	synthetic_gold
+Labroides dimidiatus cleaned ectoparasites from the gills and skin of Epinephelus fasciatus at a coral reef cleaning station.	1	cleaning_symbiosis	synthetic_gold
+The common cuckoo (Cuculus canorus) laid an egg in the nest of a reed warbler (Acrocephalus scirpaceus), whose chick was subsequently evicted by the cuckoo nestling.	1	brood_parasitism	synthetic_gold
+Wolbachia pipientis provided nutritional supplements to Cimex lectularius and protected the bed bug from vitamin B deficiencies.	1	mutualism	synthetic_gold
+Bombus terrestris queens visited Lavandula angustifolia flowers and deposited pollen on receptive stigmas.	1	pollination	synthetic_gold
+Apis mellifera was introduced to North America in the seventeenth century.	0	taxonomy	synthetic_gold
+Ascaris lumbricoides larvae migrated through the lungs of infected children before maturing in the small intestine.	1	parasitism	synthetic_gold
+Grey wolves (Canis lupus) hunted and killed elk (Cervus canadensis) calves in Yellowstone National Park.	1	predation	synthetic_gold
+Locusta migratoria swarms defoliated Sorghum bicolor fields, stripping leaves and stems within hours.	1	herbivory	synthetic_gold
+Aedes aegypti transmitted dengue virus to Homo sapiens during a blood meal, injecting infected saliva.	1	vectorOf	synthetic_gold
+No transmission of Borrelia burgdorferi from Ixodes ticks to deer was observed in this experiment.	0	negated	synthetic_gold
+Culex pipiens transmitted West Nile virus to Corvus brachyrhynchos during blood feeding.	1	vectorOf	synthetic_gold
+Canis lupus has a highly developed olfactory system with over 300 million scent receptors.	0	physiology	synthetic_gold
+Eurasian sparrowhawks (Accipiter nisus) seized and killed blue tits (Cyanistes caeruleus) at garden feeders.	1	predation	synthetic_gold
+Canis lupus is a member of the family Canidae and is the largest wild canid.	0	taxonomy	synthetic_gold
+Plasmodium falciparum belongs to the phylum Apicomplexa and genus Plasmodium.	0	taxonomy	synthetic_gold
+Varroa destructor fed on the haemolymph of Apis mellifera pupae within sealed brood cells.	1	ectoparasitism	synthetic_gold
+Ixodes scapularis transferred Borrelia burgdorferi to white-footed mice (Peromyscus leucopus) while feeding.	1	vectorOf	synthetic_gold
+Several bat species and Ficus trees co-occur in the same tropical forest patches.	0	cooccurrence	synthetic_gold
+Genomic comparison of Plasmodium falciparum and Plasmodium vivax revealed significant synteny.	0	phylogenetics	synthetic_gold
+Eurasian jays (Garrulus glandarius) cached Quercus robur acorns up to 2 km from the parent tree, germinating the following spring.	1	seed_dispersal	synthetic_gold
+Stercorarius parasiticus chased Arctic terns (Sterna paradisaea) until they dropped their fish, which the skua then consumed.	1	kleptoparasitism	synthetic_gold
+Dengue virus transmission involves mosquito vectors of the genus Aedes.	0	background	synthetic_gold
+Nasonia vitripennis pupated within Calliphora vicina puparia after the wasp larvae consumed the host fly.	1	parasitoidism	synthetic_gold
+Rattus norvegicus outcompeted Rattus rattus for grain stores in barns, displacing the black rat from occupied sites.	1	competition	synthetic_gold
+The genome of Plasmodium falciparum was sequenced and found to contain approximately 23 megabases.	0	genomics	synthetic_gold
+The tapeworm Taenia solium established itself in the intestine of Sus scrofa and absorbed nutrients from the host gut.	1	parasitism	synthetic_gold
+Wolves did not prey on deer in this enclosed study area during the observation period.	0	negated	synthetic_gold
+Ophiocordyceps unilateralis infected Camponotus leonardi ants, manipulating their behaviour before killing them.	1	parasitism	synthetic_gold
+Macrocheles muscaedomesticae mites attached to Musca domestica and were transported to new dung patches.	1	phoresy	synthetic_gold
+Picea abies stand density declined significantly in plots affected by bark beetle outbreaks.	0	monitoring	synthetic_gold
+Tapirs (Tapirus terrestris) consumed Attalea butyracea palm fruits and deposited viable seeds in their dung.	1	seed_dispersal	synthetic_gold
+Temperature increases of 2°C are projected to shift the range of Aedes aegypti northward.	0	environmental	synthetic_gold
+The water spider (Dolomedes fimbriatus) caught and consumed tadpoles (Rana temporaria) from pond surface.	1	predation	synthetic_gold
+Bees are well-established pollinators of many agricultural crops worldwide.	0	background	synthetic_gold
+Plasmodium falciparum is the most lethal malaria parasite affecting humans.	0	background	synthetic_gold
+Rhizobium leguminosarum colonised root nodules of Pisum sativum and fixed atmospheric nitrogen for the plant.	1	mutualism	synthetic_gold
+Manduca sexta caterpillars consumed Nicotiana attenuata leaves, removing up to 80% of the leaf area.	1	herbivory	synthetic_gold
+The strangler fig (Ficus aurea) germinated on Sabal palmetto and sent roots down to the soil, eventually overgrowing and killing the host palm.	1	parasitism	synthetic_gold
+Triatoma infestans deposited Trypanosoma cruzi in its faeces near the bite wound of Homo sapiens, causing Chagas disease.	1	vectorOf	synthetic_gold
+Plasmodium falciparum infected red blood cells of Homo sapiens and multiplied within them, causing malaria.	1	parasitism	synthetic_gold
+Drought conditions in 2018 reduced floral resources for pollinators across Mediterranean Europe.	0	environmental	synthetic_gold
+Fruit bats (Pteropus alecto) ingested Ficus fruits and defecated the seeds at roost sites, dispersing them across the landscape.	1	seed_dispersal	synthetic_gold
+Sitobion avenae aphids fed on Triticum aestivum phloem sap, stunting plant growth and reducing grain yield.	1	herbivory	synthetic_gold
+Elk populations in Yellowstone increased by 15% between 2010 and 2015.	0	monitoring	synthetic_gold
+Datura wrightii was exclusively pollinated by Manduca quinquemaculata moths, which inserted their proboscis into the flowers at night.	1	pollination	synthetic_gold
+Anopheles gambiae mosquitoes were reared in insectary conditions and blood-fed on sheep to maintain the colony.	0	methodology	synthetic_gold
+Cotesia glomerata larvae hatched inside Pieris brassicae caterpillars, feeding on the host tissues before pupating externally.	1	parasitoidism	synthetic_gold
+Eulaema meriana collected and deposited pollen on Euglossa orchid flowers during fragrance-gathering visits.	1	pollination	synthetic_gold
+The African lion (Panthera leo) preyed on wildebeest (Connochaetes taurinus) during the dry season migration.	1	predation	synthetic_gold
+The mountain pine beetle (Dendroctonus ponderosae) bored into Pinus contorta phloem and fed on inner bark tissue.	1	herbivory	synthetic_gold
+Symbiodinium sp. photosynthesised within the tissues of Acropora millepora coral, providing the host with fixed carbon.	1	mutualism	synthetic_gold
+Toxoplasma gondii formed cysts in the brain tissue of Mus musculus following oral ingestion of oocysts.	1	parasitism	synthetic_gold
+The distribution of Quercus robur extends from western Europe to the Ural Mountains.	0	taxonomy	synthetic_gold
+Peregrine falcons (Falco peregrinus) stooped on and killed common starlings (Sturnus vulgaris) mid-flight.	1	predation	synthetic_gold
+Wolves are known to be predators of elk in many ecosystems.	0	background	synthetic_gold
+Frankia alni formed nitrogen-fixing nodules on Alnus glutinosa roots, supplying the tree with combined nitrogen.	1	mutualism	synthetic_gold
+Nicotiana attenuata produces trypsin protease inhibitors in response to wounding.	0	physiology	synthetic_gold
+We exposed Mus musculus to Plasmodium berghei-infected red blood cells to measure cytokine responses.	0	methodology	synthetic_gold
+Whole-genome sequencing of Cotesia glomerata revealed expansions in venom gene families.	0	genomics	synthetic_gold
+Aedes aegypti and Homo sapiens populations overlap extensively in tropical urban environments.	0	cooccurrence	synthetic_gold
+Hyenas (Crocuta crocuta) drove lions (Panthera leo) from a zebra carcass and consumed the kill themselves.	1	kleptoparasitism	synthetic_gold
+Canis lupus and Cervus canadensis both inhabit the boreal forests of North America.	0	cooccurrence	synthetic_gold
+The relationship between mycorrhizal fungi and plant roots has been studied extensively.	0	background	synthetic_gold
+Lycaena arion caterpillars were carried into Myrmica sabuleti nests and fed on ant larvae for ten months.	1	myrmecophily	synthetic_gold
+Varroa destructor has been identified as a major threat to honeybee populations globally.	0	background	synthetic_gold
+Rhizobium leguminosarum cultures were grown on yeast mannitol agar at 28°C before inoculation trials.	0	methodology	synthetic_gold
+Wolbachia pipientis carries a bacteriophage (WO) integrated into its genome.	0	genomics	synthetic_gold
+Corvus monedula has been classified as a species of least concern by the IUCN.	0	taxonomy	synthetic_gold
+Invasive Phytophthora cinnamomi suppressed Quercus suber regeneration by competing for soil water and nutrients.	1	competition	synthetic_gold
+Cotesia glomerata parasitoid wasps were maintained in the laboratory on Pieris brassicae for colony maintenance.	0	methodology	synthetic_gold
+Neotyphodium coenophialum grew endophytically within Festuca arundinacea tissues and produced alkaloids that deterred insect herbivores.	1	mutualism	synthetic_gold
+The Varroa destructor genome encodes a suite of salivary proteins expressed during feeding.	0	genomics	synthetic_gold
+Apis mellifera colonies were kept in wooden hives adjacent to Malus domestica orchards for the duration of the experiment.	0	methodology	synthetic_gold
+The parasitoid wasp was unable to parasitise Manduca sexta larvae beyond the third instar.	0	negated	synthetic_gold
+Anopheles gambiae inoculated Plasmodium falciparum sporozoites into the bloodstream of human hosts during feeding.	1	vectorOf	synthetic_gold
+Habitat fragmentation has reduced connectivity between wolf populations in Europe.	0	environmental	synthetic_gold
+Toxoplasma gondii tachyzoites were cultured in HeLa cell monolayers at 37°C.	0	methodology	synthetic_gold
+Peromyscus leucopus tissue samples were collected from trapped individuals and stored at -80°C.	0	methodology	synthetic_gold
+The abundance of Aedes aegypti was monitored weekly using ovitraps in urban areas.	0	monitoring	synthetic_gold
+Glomus mosseae formed arbuscular mycorrhizal associations with Zea mays roots, enhancing phosphorus uptake.	1	mutualism	synthetic_gold
+Elephants (Loxodonta africana) swallowed Acacia tortilis pods and excreted intact seeds up to 65 km away.	1	seed_dispersal	synthetic_gold
+The great white shark (Carcharodon carcharias) attacked and consumed a Cape fur seal (Arctocephalus pusillus) near the surface.	1	predation	synthetic_gold
+Apis mellifera and Malus domestica are commonly found in European orchards.	0	cooccurrence	synthetic_gold
+Apis mellifera workers transferred pollen from Malus domestica anthers to stigmas while foraging for nectar.	1	pollination	synthetic_gold
+Barn owls (Tyto alba) captured and ate house mice (Mus musculus) in agricultural fields.	1	predation	synthetic_gold
+The hawkmoth Manduca sexta hovered at Nicotiana alata flowers and pollinated them while feeding on nectar.	1	pollination	synthetic_gold
+Borrelia burgdorferi and Borrelia afzelii are both members of the Borrelia burgdorferi sensu lato complex.	0	phylogenetics	synthetic_gold
+Manduca sexta larvae produce digestive enzymes that break down plant cell walls.	0	physiology	synthetic_gold
+Apis mellifera did not visit Nicotiana attenuata flowers under field conditions.	0	negated	synthetic_gold
+A phylogenetic analysis placed Ophiocordyceps unilateralis within the family Ophiocordycipitaceae.	0	phylogenetics	synthetic_gold
+Honeybee colony losses exceeded 30% in Europe during the winter of 2014.	0	monitoring	synthetic_gold
+Ips typographus larvae fed under the bark of Picea abies, girdling the trees and causing mortality.	1	herbivory	synthetic_gold
+Manduca sexta eggs were placed on Nicotiana attenuata leaves to test feeding preference.	0	methodology	synthetic_gold
+Seed dispersal by vertebrates plays an important role in plant community dynamics.	0	background	synthetic_gold
+The ichneumon wasp Venturia canescens deposited eggs inside Ephestia kuehniella larvae, which were subsequently killed by the developing parasitoid.	1	parasitoidism	synthetic_gold
+Apis mellifera workers synthesise royal jelly from hypopharyngeal gland secretions.	0	physiology	synthetic_gold
+Plasmodium falciparum and Homo sapiens are found in sub-Saharan Africa.	0	cooccurrence	synthetic_gold

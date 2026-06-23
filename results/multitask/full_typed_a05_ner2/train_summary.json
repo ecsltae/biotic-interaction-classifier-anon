@@ -1,0 +1,37 @@
+{
+  "encoder": "microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext",
+  "ner_scheme": "full_typed",
+  "alpha": 0.5,
+  "temperature": 2.0,
+  "soft_labels": "classifier/data/training/distillation_soft_labels.csv",
+  "epochs": 3,
+  "pretrain_ner_epochs": 2,
+  "best_val_cls_f1": 0.38661710037174724,
+  "best_threshold": 0.28,
+  "history": [
+    {
+      "epoch": 1,
+      "loss": 0.31117861864651053,
+      "cls_f1": 0.3448275862068966,
+      "cls_prec": 0.39308176100628933,
+      "cls_rec": 0.3071253071253071,
+      "ner_f1": 0.9623095429029671
+    },
+    {
+      "epoch": 2,
+      "loss": 0.2980908414112347,
+      "cls_f1": 0.3577639751552795,
+      "cls_prec": 0.36180904522613067,
+      "cls_rec": 0.3538083538083538,
+      "ner_f1": 0.9676982591876209
+    },
+    {
+      "epoch": 3,
+      "loss": 0.3298157831670869,
+      "cls_f1": 0.38661710037174724,
+      "cls_prec": 0.39,
+      "cls_rec": 0.3832923832923833,
+      "ner_f1": 0.9711027601399508
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+sentence,label,category,difficulty
+Surveillance data indicated a seasonal peak in West Nile virus cases during late summer months.,0,epidemiology,medium
+"Plasmodium vivax belongs to the phylum Apicomplexa, the same group containing Toxoplasma gondii.",0,taxonomy,medium
+Human botflies (Dermatobia hominis) burrowed into the skin of cattle and developed as subcutaneous larvae.,1,ectoparasitism,medium
+Eastern tent caterpillars (Malacosoma americanum) fed voraciously on the foliage of black cherry trees (Prunus serotina).,1,herbivory,easy
+Rabies virus transmitted from infected bats to livestock through bite wounds in rural Latin America.,1,zoonosis,easy
+Gray squirrels (Sciurus carolinensis) outcompeted native red squirrels (Sciurus vulgaris) for food and nesting sites in British woodlands.,1,competition,medium
+Q fever bacteria (Coxiella burnetii) spread from infected goats to farm workers via inhalation of contaminated dust.,1,zoonosis,medium
+Leptospira interrogans transmitted from infected rats to dock workers through contact with contaminated water.,1,zoonosis,medium
+The family Culicidae includes more than three thousand described mosquito species worldwide.,0,taxonomy,easy
+Coral reefs are home to a wide diversity of fish and invertebrate species.,0,background,easy
+"The sample contained DNA traces of both species, but contamination during collection could not be ruled out.",0,borderline,hard
+"Lichen-forming fungi associated with green algae, exchanging structural protection for photosynthetic sugars.",1,mutualism,medium
+The fox was observed near the rabbit burrow but did not approach further before the study ended.,0,negated,medium
+Zebra mussels (Dreissena polymorpha) outcompeted native freshwater mussels for plankton and attachment substrate in the Great Lakes.,1,competition,medium
+Mycobacterium tuberculosis infected the lung tissue of patients and formed characteristic granulomas.,1,host-pathogen,medium
+"Mycorrhizal fungi (Rhizophagus irregularis) colonized the roots of soybean plants (Glycine max), exchanging phosphorus for plant sugars.",1,mutualism,medium
+White-tailed deer (Odocoileus virginianus) browsed heavily on young maple saplings (Acer saccharum) in regenerating forests.,1,herbivory,easy
+Dirofilaria immitis heartworms matured in the pulmonary arteries of infected domestic dogs (Canis familiaris).,1,endoparasitism,medium
+Avian influenza outbreaks have been reported with increasing frequency in commercial poultry operations since 2015.,0,epidemiology,medium
+Toucans (Ramphastos toco) swallowed palm fruits whole and excreted intact seeds far from the parent tree.,1,seed_dispersal,easy
+Ivermectin treatment reduced parasite burden in dogs diagnosed with heartworm infection.,0,treatment,medium
+African wild dogs (Lycaon pictus) chased down and killed an impala (Aepyceros melampus) during a coordinated hunt.,1,predation,medium
+Vaccination campaigns targeted poultry flocks to reduce the spread of avian influenza.,0,treatment,easy
+"Citrus greening bacteria (Candidatus Liberibacter) infected orange trees (Citrus sinensis) after transmission by psyllid feeding, stunting fruit development.",1,indirect,hard
+The wolf (Canis lupus) is classified within the order Carnivora and family Canidae.,0,taxonomy,easy
+Felis catus was domesticated from wildcat ancestors several thousand years ago.,0,taxonomy,medium
+"Wuchereria bancrofti filarial worms inhabited the lymphatic vessels of infected humans, causing chronic swelling.",1,endoparasitism,medium
+Schistosoma mansoni flukes migrated through the bloodstream of infected humans and laid eggs in the intestinal wall.,1,endoparasitism,medium
+Sea lice (Lepeophtheirus salmonis) attached to wild Atlantic salmon (Salmo salar) and grazed on their skin and mucus.,1,ectoparasitism,easy
+The relationship between the nematode and the host plant root could not be classified due to ambiguous tissue damage.,0,borderline,hard
+White-footed mice (Peromyscus leucopus) served as a primary reservoir host for Borrelia burgdorferi in eastern forests.,1,reservoir,medium
+The cattle tick (Rhipicephalus microplus) attached to cattle (Bos taurus) and engorged on their blood for several days.,1,ectoparasitism,easy
+"Genetic material from both organisms was detected in the gut content, but the timing of ingestion was uncertain.",0,borderline,hard
+No evidence of predation by Cooper's hawks on backyard chickens was recorded during the monitoring period.,0,borderline,medium
+Researchers could not confirm whether the observed contact between the wasp and caterpillar resulted in parasitism.,0,borderline,hard
+Light traps were used to sample nocturnal insect activity at each survey location.,0,methodology,easy
+Sparrows are small passerine birds found in a wide range of habitats across the globe.,0,generic,easy
+Snowy owls (Bubo scandiacus) captured and killed lemmings (Lemmus trimucronatus) across Arctic tundra during winter hunts.,1,predation,easy
+Whether the recorded vocalization indicated active predation or alarm signaling remained unresolved.,0,borderline,hard
+Soil cores were extracted at each site to quantify root biomass and microbial activity.,0,methodology,medium
+Fig wasps (Blastophaga psenes) pollinated fig flowers (Ficus carica) while laying eggs inside the developing fruit.,1,mutualism,medium
+The Colorado potato beetle (Leptinotarsa decemlineata) stripped the leaves from potato plants (Solanum tuberosum) within days.,1,herbivory,easy
+Mosquitoes of the genus Culex transmitted St. Louis encephalitis virus to house sparrows during summer transmission cycles.,1,vector_borne,medium
+It could not be determined from the photograph whether the spider had actually captured the moth or was merely resting nearby.,0,borderline,hard
+Sharks have existed in the world's oceans for hundreds of millions of years.,0,generic,easy
+Oxpeckers (Buphagus africanus) removed ticks from the hides of African buffalo (Syncerus caffer) while feeding.,1,mutualism,easy
+Argas reflexus ticks fed nocturnally on the blood of feral pigeons (Columba livia) roosting in urban lofts.,1,ectoparasitism,medium
+Phlebotomine sandflies transmitted Leishmania infantum to domestic dogs across Mediterranean rural areas.,1,vector_borne,medium
+"Aphid (Aphis fabae) honeydew secretions attracted ants that, in foraging nearby, deterred ladybird predators from the colony.",1,indirect,hard
+Giardia lamblia trophozoites attached to the intestinal epithelium of infected beavers (Castor canadensis) and impaired nutrient absorption.,1,endoparasitism,hard
+Grizzly bears (Ursus arctos) consumed huckleberries (Vaccinium membranaceum) and dispersed viable seeds across mountain slopes.,1,seed_dispersal,easy
+Zika virus cases surged in several Latin American countries during the 2015-2016 outbreak period.,0,epidemiology,medium
+Mosquito larvae were reared in the laboratory at 27°C with a 12-hour light cycle.,0,methodology,medium
+Carpenter bees (Xylocopa virginica) buzz-pollinated tomato flowers (Solanum lycopersicum) in greenhouse settings.,1,pollination,easy
+Helicobacter pylori bacteria colonized the gastric mucosa of infected humans and triggered chronic inflammation.,1,host-pathogen,medium
+The two species were captured in the same trap but no direct interaction was documented.,0,borderline,medium
+Necropsies were performed on stranded marine mammals to determine cause of death.,0,methodology,medium
+Demodex folliculorum mites colonized human hair follicles and fed on sebum and skin cells.,1,ectoparasitism,medium
+African swine fever virus infected domestic pigs and caused severe hemorrhagic disease.,1,host-pathogen,easy
+Antifungal spray applications were used to manage white-nose syndrome in bat hibernacula.,0,treatment,medium
+Desert locusts (Schistocerca gregaria) consumed entire fields of millet (Pennisetum glaucum) during swarming events.,1,herbivory,easy
+Whether the observed bite resulted in venom transfer was not established in the field notes.,0,borderline,hard
+Hantavirus passed from infected deer mice to humans through inhalation of aerosolized rodent excreta.,1,zoonosis,medium
+"The emerald ash borer (Agrilus planipennis) larvae tunneled through the inner bark of ash trees (Fraxinus americana), disrupting nutrient flow.",1,herbivory,medium
+Brucella abortus transmitted from infected cattle to veterinarians through contact with placental tissue during calving.,1,zoonosis,medium
+Cane toads (Rhinella marina) competed with native frog species for invertebrate prey across Australian wetlands.,1,competition,medium
+Cedar waxwings (Bombycilla cedrorum) ingested juniper berries (Juniperus virginiana) and dispersed the seeds through their droppings.,1,seed_dispersal,easy
+The Cooper's hawk (Accipiter cooperii) struck and killed a mourning dove (Zenaida macroura) in suburban backyards.,1,predation,easy
+It remains unclear whether the beetle larvae fed on the root tissue or merely tunneled through dead wood.,0,borderline,hard
+"The tick was removed before engorgement could be confirmed, leaving feeding status ambiguous.",0,borderline,hard
+Nectar-feeding bats (Leptonycteris yerbabuenae) pollinated saguaro cactus flowers (Carnegiea gigantea) during nocturnal visits.,1,pollination,medium
+Avian influenza virus (H5N1) infected wild mallards (Anas platyrhynchos) and replicated in their respiratory tract.,1,host-pathogen,easy
+"White-nose syndrome fungus (Pseudogymnoascus destructans) infected hibernating little brown bats (Myotis lucifugus), depleting their fat reserves.",1,host-pathogen,medium
+Many bird species exhibit complex migratory behavior tied to seasonal changes.,0,generic,easy
+The dragonfly nymph (Anax imperator) seized and consumed mosquito larvae (Culex pipiens) underwater.,1,predation,easy
+Acacia ants (Pseudomyrmex ferrugineus) defended Acacia collinsii trees from herbivores in exchange for nectar and nesting space.,1,mutualism,easy
+Argentine ants (Linepithema humile) displaced native ant species from foraging territories in Mediterranean ecosystems.,1,competition,medium
+"Pollen grains were found on the bee's body, but visitation to a specific flower species was not recorded.",0,borderline,medium
+"Newcastle disease virus infected free-ranging cormorants (Phalacrocorax auritus), causing large-scale die-offs.",1,host-pathogen,medium
+Cholera outbreaks are frequently associated with disruptions to municipal water treatment infrastructure.,0,epidemiology,medium
+Polar bears (Ursus maritimus) ambushed and killed ringed seals (Pusa hispida) at breathing holes in sea ice.,1,predation,easy
+Feather mites (Analges passerinus) lived among the plumage of house sparrows (Passer domesticus) and fed on skin debris.,1,ectoparasitism,easy
+Camera traps were deployed along forest trails to monitor mammal activity over six months.,0,methodology,easy
+The praying mantis (Mantis religiosa) seized and devoured a honeybee (Apis mellifera) mid-flight.,1,predation,easy
+Trichinella spiralis larvae encysted within the skeletal muscle tissue of domestic pigs (Sus domesticus).,1,endoparasitism,medium
+"Sea otter (Enhydra lutris) predation on sea urchins prevented urchin barrens, indirectly sustaining kelp forest ecosystems.",1,indirect,medium
+Mosquitoes of the genus Aedes are known vectors for several arboviral diseases worldwide.,0,background,easy
+Antibiotic therapy was administered to cattle herds affected by bovine respiratory disease.,0,treatment,medium
+Tiger sharks (Galeocerdo cuvier) preyed on green sea turtles (Chelonia mydas) near nesting beaches.,1,predation,medium
+Oak trees can live for several centuries under favorable growing conditions.,0,generic,easy
+Sea turtles return to nesting beaches after years spent foraging in open ocean habitats.,0,background,easy
+Plasmodium knowlesi infected long-tailed macaques (Macaca fascicularis) and occasionally spilled over into human hosts in Southeast Asia.,1,host-pathogen,hard
+"Agoutis (Dasyprocta punctata) buried Brazil nut (Bertholletia excelsa) seeds in scattered caches, aiding forest regeneration.",1,seed_dispersal,medium
+Soldier flies (Hermetia illucens) transferred pollen between wild carrot flowers (Daucus carota) while foraging.,1,pollination,easy
+Blood samples were collected from trapped rodents and stored in liquid nitrogen for later analysis.,0,methodology,medium
+Hummingbirds (Archilochus colubris) transferred pollen between trumpet creeper flowers (Campsis radicans) while feeding on nectar.,1,pollination,easy
+Ticks were collected by flagging vegetation and identified to species under a dissecting microscope.,0,methodology,medium

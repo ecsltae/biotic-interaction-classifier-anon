@@ -1,0 +1,54 @@
+This is BibTeX, Version 0.99d (TeX Live 2022/dev/Debian)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: biotic_interaction_classifier_ARR.aux
+The style file: acl_natbib.bst
+Reallocated glb_str_ptr (elt_size=4) to 20 items from 10.
+Reallocated global_strs (elt_size=200001) to 20 items from 10.
+Reallocated glb_str_end (elt_size=4) to 20 items from 10.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Database file #1: references.bib
+Warning--can't use both volume and number fields in habibi2017deep
+You've used 23 entries,
+            3764 wiz_defined-function locations,
+            877 strings with 10642 characters,
+and the built_in function-call counts, 18924 in all, are:
+= -- 1579
+> -- 1074
+< -- 10
++ -- 437
+- -- 326
+* -- 1314
+:= -- 2783
+add.period$ -- 92
+call.type$ -- 23
+change.case$ -- 236
+chr.to.int$ -- 24
+cite$ -- 24
+duplicate$ -- 1114
+empty$ -- 1274
+format.name$ -- 395
+if$ -- 4040
+int.to.chr$ -- 1
+int.to.str$ -- 2
+missing$ -- 266
+newline$ -- 119
+num.names$ -- 92
+pop$ -- 658
+preamble$ -- 1
+purify$ -- 200
+quote$ -- 0
+skip$ -- 955
+stack$ -- 0
+substring$ -- 656
+swap$ -- 622
+text.length$ -- 8
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 204
+warning$ -- 1
+while$ -- 98
+width$ -- 0
+write$ -- 296
+(There was 1 warning)

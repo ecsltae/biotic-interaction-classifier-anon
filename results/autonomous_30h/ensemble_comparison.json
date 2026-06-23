@@ -1,0 +1,202 @@
+{
+  "distilled_v2": {
+    "ep_relax": {
+      "f1": 0.808,
+      "prec": 0.75,
+      "rec": 0.875,
+      "thr": 0.25
+    },
+    "eval_100": {
+      "f1": 0.65,
+      "prec": 0.531,
+      "rec": 0.839,
+      "thr": 0.2
+    },
+    "synthetic_gold": {
+      "f1": 0.959,
+      "prec": 0.979,
+      "rec": 0.94,
+      "thr": 0.7
+    }
+  },
+  "distilled_v3": {
+    "ep_relax": {
+      "f1": 0.808,
+      "prec": 0.784,
+      "rec": 0.833,
+      "thr": 0.45
+    },
+    "eval_100": {
+      "f1": 0.706,
+      "prec": 0.649,
+      "rec": 0.774,
+      "thr": 0.35
+    },
+    "synthetic_gold": {
+      "f1": 0.916,
+      "prec": 0.86,
+      "rec": 0.98,
+      "thr": 0.35
+    }
+  },
+  "v2\u00d7v3_geo": {
+    "ep_relax": {
+      "f1": 0.792,
+      "prec": 0.755,
+      "rec": 0.833,
+      "thr": 0.35
+    },
+    "eval_100": {
+      "f1": 0.658,
+      "prec": 0.542,
+      "rec": 0.839,
+      "thr": 0.25
+    },
+    "synthetic_gold": {
+      "f1": 0.97,
+      "prec": 0.98,
+      "rec": 0.96,
+      "thr": 0.55
+    }
+  },
+  "v2\u00d7v3_arith": {
+    "ep_relax": {
+      "f1": 0.81,
+      "prec": 0.691,
+      "rec": 0.979,
+      "thr": 0.25
+    },
+    "eval_100": {
+      "f1": 0.677,
+      "prec": 0.647,
+      "rec": 0.71,
+      "thr": 0.3
+    },
+    "synthetic_gold": {
+      "f1": 0.97,
+      "prec": 0.98,
+      "rec": 0.96,
+      "thr": 0.55
+    }
+  },
+  "v2\u00d7T5_geo": {
+    "ep_relax": {
+      "f1": 0.812,
+      "prec": 0.774,
+      "rec": 0.854,
+      "thr": 0.5
+    },
+    "eval_100": {
+      "f1": 1.0,
+      "prec": 1.0,
+      "rec": 1.0,
+      "thr": 0.1
+    },
+    "synthetic_gold": {
+      "f1": 0.97,
+      "prec": 0.961,
+      "rec": 0.98,
+      "thr": 0.7
+    }
+  },
+  "v3\u00d7T5_geo": {
+    "ep_relax": {
+      "f1": 0.816,
+      "prec": 0.764,
+      "rec": 0.875,
+      "thr": 0.6
+    },
+    "eval_100": {
+      "f1": 1.0,
+      "prec": 1.0,
+      "rec": 1.0,
+      "thr": 0.1
+    },
+    "synthetic_gold": {
+      "f1": 0.933,
+      "prec": 0.891,
+      "rec": 0.98,
+      "thr": 0.1
+    }
+  },
+  "v2\u00d7v3\u00d7T5_geo": {
+    "ep_relax": {
+      "f1": 0.792,
+      "prec": 0.724,
+      "rec": 0.875,
+      "thr": 0.4
+    },
+    "eval_100": {
+      "f1": 1.0,
+      "prec": 1.0,
+      "rec": 1.0,
+      "thr": 0.1
+    },
+    "synthetic_gold": {
+      "f1": 0.97,
+      "prec": 0.98,
+      "rec": 0.96,
+      "thr": 0.65
+    }
+  },
+  "orig_BERT\u00d7T5_geo": {
+    "ep_relax": {
+      "f1": 0.857,
+      "prec": 0.789,
+      "rec": 0.938,
+      "thr": 0.35
+    },
+    "eval_100": {
+      "f1": 1.0,
+      "prec": 1.0,
+      "rec": 1.0,
+      "thr": 0.1
+    },
+    "synthetic_gold": {
+      "f1": 0.95,
+      "prec": 0.941,
+      "rec": 0.96,
+      "thr": 0.8
+    }
+  },
+  "v2\u00d7orig_BERT_geo": {
+    "ep_relax": {
+      "f1": 0.812,
+      "prec": 0.774,
+      "rec": 0.854,
+      "thr": 0.4
+    },
+    "eval_100": {
+      "f1": 1.0,
+      "prec": 1.0,
+      "rec": 1.0,
+      "thr": 0.2
+    },
+    "synthetic_gold": {
+      "f1": 0.98,
+      "prec": 0.98,
+      "rec": 0.98,
+      "thr": 0.6
+    }
+  },
+  "v2\u00d7v3\u00d7orig_BERT\u00d7T5_geo": {
+    "ep_relax": {
+      "f1": 0.832,
+      "prec": 0.792,
+      "rec": 0.875,
+      "thr": 0.45
+    },
+    "eval_100": {
+      "f1": 1.0,
+      "prec": 1.0,
+      "rec": 1.0,
+      "thr": 0.1
+    },
+    "synthetic_gold": {
+      "f1": 0.97,
+      "prec": 0.98,
+      "rec": 0.96,
+      "thr": 0.7
+    }
+  }
+}

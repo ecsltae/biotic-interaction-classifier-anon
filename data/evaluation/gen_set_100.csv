@@ -1,0 +1,101 @@
+sentence,label,category,difficulty
+"Ixodes ricinus ticks parasitize roe deer across European temperate forests.",1,ectoparasitism,easy
+"Varroa destructor mites parasitize honeybee colonies, feeding on haemolymph and reproducing in brood cells.",1,ectoparasitism,easy
+"The sea louse Lepeophtheirus salmonis attaches to and feeds on the skin and mucus of Atlantic salmon.",1,ectoparasitism,easy
+"Sarcoptes scabiei infests red foxes, causing severe sarcoptic mange in wild populations.",1,ectoparasitism,easy
+"Pediculus humanus capitis infests the scalp of humans and feeds on blood.",1,ectoparasitism,easy
+"Toxoplasma gondii infects rodents and manipulates their behaviour to reduce fear of cats.",1,endoparasitism,easy
+"Plasmodium falciparum parasitizes human erythrocytes and is transmitted by Anopheles mosquitoes.",1,endoparasitism,easy
+"Trichinella spiralis larvae encyst in the muscle tissue of infected pigs.",1,endoparasitism,easy
+"Fasciola hepatica causes liver fluke disease in sheep and cattle.",1,endoparasitism,easy
+"Echinococcus granulosus forms hydatid cysts in the liver of intermediate hosts such as sheep.",1,endoparasitism,easy
+"Anopheles gambiae transmits Plasmodium falciparum to human hosts during blood feeding.",1,vector-borne,easy
+"Aedes albopictus is a competent vector for dengue virus and chikungunya virus in humans.",1,vector-borne,easy
+"Culex pipiens transmits West Nile virus to birds and incidentally to humans.",1,vector-borne,easy
+"Ixodes scapularis transmits Borrelia burgdorferi to mammals during prolonged blood feeding.",1,vector-borne,easy
+"Phlebotomus papatasi sand flies transmit Leishmania major to susceptible mammalian hosts.",1,vector-borne,easy
+"Gray wolves prey on elk in Yellowstone National Park, regulating ungulate populations.",1,predation,easy
+"Peregrine falcons hunt and consume pigeons in urban environments.",1,predation,easy
+"Sea otters prey on sea urchins, controlling their populations and maintaining kelp forests.",1,predation,easy
+"African wild dogs cooperatively hunt wildebeest on the Serengeti plains.",1,predation,easy
+"Barn owls capture and consume voles and shrews during nocturnal foraging.",1,predation,easy
+"Rhizobium bacteria fix atmospheric nitrogen in mutualistic symbiosis with legume root nodules.",1,mutualism,easy
+"Mycorrhizal fungi colonize plant roots and exchange soil phosphorus for photosynthetic carbon.",1,mutualism,easy
+"Oxpeckers remove ticks and ectoparasites from the skin of large African ungulates.",1,mutualism,easy
+"Cleaner wrasse remove parasites from the gills and skin of client fish at cleaning stations.",1,mutualism,easy
+"Clownfish shelter among sea anemone tentacles in a mutualistic relationship that benefits both partners.",1,mutualism,easy
+"Mycobacterium tuberculosis infects the lungs of humans, causing pulmonary tuberculosis.",1,host-pathogen,easy
+"Rabies virus infects and replicates within neurons of its mammalian hosts.",1,host-pathogen,easy
+"Foot-and-mouth disease virus infects cloven-hoofed animals including cattle, sheep, and pigs.",1,host-pathogen,easy
+"Staphylococcus aureus colonizes the skin and anterior nares of humans.",1,host-pathogen,easy
+"Phytophthora infestans infected and destroyed potato crops, causing the Irish famine.",1,host-pathogen,easy
+"Mountain pine beetles bore into lodgepole pine bark and feed on phloem tissue.",1,herbivory,easy
+"Monarch butterfly caterpillars feed exclusively on milkweed plants of the genus Asclepias.",1,herbivory,easy
+"African elephants strip bark from acacia trees to access the cambium layer beneath.",1,herbivory,easy
+"Spruce budworm defoliates balsam fir and white spruce trees across boreal Canadian forests.",1,herbivory,easy
+"Deer browse on young shoots and bark of oak trees during winter food scarcity.",1,herbivory,easy
+"Apis mellifera pollinates apple flowers while foraging for nectar and pollen.",1,pollination,easy
+"Hummingbirds pollinate tubular Heliconia flowers while extracting nectar with their elongated bills.",1,pollination,easy
+"Yucca moths lay eggs in yucca flowers and simultaneously deposit pollen, pollinating the plant.",1,pollination,easy
+"Fruit bats of the genus Artibeus disperse seeds of fig trees across tropical forests in their dung.",1,seed-dispersal,easy
+"African elephants disperse seeds of Marula trees across savannas through their dung.",1,seed-dispersal,easy
+"Salmonella Typhimurium infects poultry and is transmitted to humans via contaminated eggs and meat.",1,zoonosis,easy
+"Campylobacter jejuni colonizes the intestinal tract of broiler chickens and infects humans via contaminated poultry.",1,zoonosis,easy
+"Hendra virus infects horses from fruit bat reservoir hosts and can be transmitted from horses to humans.",1,zoonosis,easy
+"Nipah virus spreads from Pteropus fruit bats to pigs, and subsequently from pigs to humans.",1,zoonosis,easy
+"Brucella melitensis infects goats and sheep and causes undulant fever in humans exposed to infected animals.",1,zoonosis,easy
+"Borrelia burgdorferi establishes persistent reservoir infection in white-footed mice without causing disease.",1,reservoir,medium
+"Dogs serve as urban reservoir hosts for Leishmania infantum, facilitating human infection.",1,reservoir,medium
+"White-tailed deer act as amplifying hosts for Ehrlichia chaffeensis, which is then transmitted to humans by Amblyomma ticks.",1,reservoir,medium
+"Rodents serve as reservoir hosts for hantaviruses, shedding virus in urine and saliva.",1,reservoir,medium
+"Fruit bats of the genus Pteropus are considered natural reservoir hosts for Hendra and Nipah viruses.",1,reservoir,medium
+"Migratory waterfowl carry and disseminate highly pathogenic avian influenza viruses across continents.",1,indirect,medium
+"Cattle infected with bovine tuberculosis transmit the pathogen to badgers through shared pasture and water sources.",1,indirect,medium
+"European rabbits constitute the primary prey of the critically endangered Iberian lynx.",1,predation,medium
+"Zebra mussels filter phytoplankton from the water column, competing with native filter feeders in the Great Lakes.",1,competition,medium
+"Grey squirrels outcompete red squirrels for food resources in British deciduous woodlands.",1,competition,medium
+"The gut microbiome of Aedes aegypti mosquitoes influences their susceptibility to dengue virus infection.",1,indirect,hard
+"Migratory birds carry antibiotic-resistant Campylobacter strains across international boundaries during seasonal movements.",1,indirect,hard
+"Bats roosting in caves shed viable Histoplasma capsulatum in their guano, which infects humans entering the caves.",1,indirect,hard
+"The presence of Ixodes ticks on lizards that are incompetent hosts for Borrelia reduces transmission to competent rodent hosts.",1,indirect,hard
+"Predation of infected rodents by raptors reduces the density of Francisella tularensis reservoir hosts in grassland ecosystems.",1,indirect,hard
+"Serum samples were collected from 200 cattle and tested using ELISA for Brucella antibodies.",0,methodology,easy
+"DNA was extracted from tick specimens and amplified by PCR to detect the presence of Borrelia.",0,methodology,easy
+"Blood smears from 350 febrile patients were examined microscopically for Plasmodium parasites.",0,methodology,easy
+"Nasal swabs were collected from wild boar carcasses and processed within 24 hours.",0,methodology,easy
+"The prevalence of Campylobacter in retail poultry was assessed using ISO-standard culture methods.",0,methodology,easy
+"Ixodes ricinus belongs to the family Ixodidae and completes a three-host life cycle over two to three years.",0,taxonomy,easy
+"Aedes aegypti is a diurnal mosquito species native to Africa but now distributed throughout the tropics.",0,taxonomy,easy
+"Toxoplasma gondii is an obligate intracellular parasite belonging to the phylum Apicomplexa.",0,taxonomy,easy
+"Leishmania donovani was first described by Leishman and Donovan independently in 1903.",0,taxonomy,easy
+"Bartonella quintana is a Gram-negative, facultative intracellular bacterium within the Alphaproteobacteria.",0,taxonomy,easy
+"The seroprevalence of Toxoplasma gondii was 38% among pregnant women enrolled in this cohort.",0,epidemiology,easy
+"Lyme disease incidence increased by 25% in the northeastern United States between 2010 and 2020.",0,epidemiology,easy
+"A total of 1,247 confirmed cases of brucellosis were reported across the European Union during the study period.",0,epidemiology,easy
+"The case fatality rate of Nipah virus infection ranged from 40% to 70% in reported outbreaks.",0,epidemiology,easy
+"Tick bite incidence was highest in June and July in temperate central European regions.",0,epidemiology,easy
+"Ivermectin treatment significantly reduced Varroa mite infestation rates in treated honey bee colonies.",0,treatment,easy
+"Vaccination of domestic dogs against rabies was associated with a significant decline in human rabies cases.",0,treatment,easy
+"Insecticide-treated bed nets reduced malaria incidence by over 50% in sub-Saharan African communities.",0,treatment,easy
+"Antibiotic prophylaxis reduced the incidence of post-bite infections in the study population.",0,treatment,easy
+"Antifungal therapy with amphotericin B successfully cleared Histoplasma capsulatum from infected patients.",0,treatment,easy
+"Climate change is projected to expand the geographic range of Ixodes ricinus northward into Scandinavia.",0,background,easy
+"The phylogenetic relationships among Bartonella species were resolved using multilocus sequence typing.",0,background,easy
+"Laboratory biosafety level 3 conditions are required for experimental work with Brucella species.",0,background,easy
+"The global burden of vector-borne diseases is estimated at over 700,000 deaths per year.",0,background,easy
+"New rapid diagnostic tests are being developed for the detection of tick-borne encephalitis virus.",0,background,easy
+"Further research is needed to clarify the exact mechanisms underlying antimicrobial resistance in Salmonella.",0,generic,easy
+"Comprehensive surveillance programmes are essential for early detection of emerging zoonotic diseases.",0,generic,easy
+"The epidemiology of leishmaniasis differs substantially between Old World and New World settings.",0,generic,easy
+"Species distribution modelling predicted northward range expansion of Aedes albopictus under future climate scenarios.",0,generic,easy
+"Whole genome sequencing revealed phylogenetic clustering of Salmonella Enteritidis outbreak strains.",0,generic,easy
+"Co-occurrence of deer and Ixodes ticks was documented across 12 forest study sites in central Europe.",0,borderline,hard
+"Geographic overlap between Pteropus bat roosting sites and human settlements was analysed using remote sensing.",0,borderline,hard
+"Rodent population density was negatively correlated with raptor abundance in grassland transects.",0,borderline,hard
+"The risk assessment concluded that importation of wild-caught parrots posed a potential Psittacosis exposure risk.",0,borderline,hard
+"Historical records of plague mortality in medieval European cities were reviewed and entered into a georeferenced database.",0,borderline,hard
+"The molecular clock analysis estimated the divergence of pathogenic Leptospira species at approximately 10,000 years ago.",0,borderline,hard
+"Serological evidence of previous Toxoplasma exposure was found in 22% of the sampled wild boar population.",0,borderline,hard
+"The study recorded the presence of Bartonella DNA in 14% of Ctenocephalides felis fleas collected from domestic cats.",0,borderline,hard
+"Surveillance data indicated that Campylobacter-positive flocks were more likely to be located near wetlands.",0,borderline,hard
+"The antimicrobial resistance profile of Staphylococcus aureus isolates differed significantly between human and bovine strains.",0,borderline,hard
