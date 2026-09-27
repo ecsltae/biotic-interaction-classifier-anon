@@ -27,7 +27,11 @@ probability that the first-listed argument is the subject. Across three corpora 
 when this prior is skewed ($0.708$) an unconstrained model takes the positional shortcut and
 its swap consistency falls to $0.473$---below chance; when the prior is near balanced ($0.486$,
 $0.544$) the model is forced to read content and reaches $0.94$--$0.97$, but never exactness.
-The released state-of-the-art BioREDirect model sits at $0.700$ on its own benchmark, where
+Holding a corpus fixed and moving only this prior---reordering argument presentation and
+nothing else---reproduces the effect on two benchmarks, and at a prior of $1.0$ swap
+consistency is exactly $0$ while accuracy falls to precisely the test set's own positional
+prior. The released state-of-the-art BioREDirect model sits at $0.700$ on its own benchmark,
+where
 $17.9\%$ of its directed predictions are returned unchanged under exchange---a
 self-contradiction---and $16.7\%$ are abandoned to the undirected class.
 We give two mechanisms that make the property exact rather than contingent. Canonicalising
@@ -98,7 +102,10 @@ Our claims, each supported on more than one corpus:
 
 \begin{enumerate}[noitemsep,topsep=2pt,leftmargin=*]
 \item \textbf{Argument-order equivariance is contingent, not guaranteed}, and the contingency
-      is predictable from a measurable corpus statistic (\S\ref{sec:res-contingency}).
+      is predictable from a measurable corpus statistic
+      (\S\ref{sec:res-contingency}) that \emph{causes} it: holding a corpus fixed and moving
+      only the statistic reproduces the effect on two benchmarks
+      (\S\ref{sec:res-intervention}).
 \item \textbf{Exactness is cheap.} $0.54\%$ additional parameters, $2\%$ of throughput, holding
       to floating-point precision rather than approximately (\S\ref{sec:res-guarantee}).
 \item \textbf{It is free.} Direction accuracy is statistically indistinguishable from the
@@ -227,8 +234,12 @@ first \texttt{@\,$\cdot$\,@} and the second \texttt{\#\,$\cdot$\,\#} in place. T
 sequence is then a function of the \emph{unordered} pair: the two presentations are
 byte-identical and Eq.~\ref{eq:consistency} holds for any readout. Decoding to a label happens
 outside the model, by comparing the \texttt{@}-marked entity to the first argument as given.
-Canonicalisation also neutralises $\pi$ by construction, taking it to $0.5$ regardless of the
-corpus.
+Canonicalisation also disarms $\pi$. Exactness does not depend on the canonical prior being
+balanced---the two presentations are the same bytes whatever it is---but the shortcut also
+stops paying, because which entity occupies the first slot is now decided by the alphabet
+rather than by the corpus. Measured, the prior moves to $0.484$ on SemEval (from $0.544$) and
+$0.502$ on BioRED (from $0.486$): alphabetical order carries essentially no information about
+which argument is the subject, which is what makes it a usable canonical form.
 
 \paragraph{Antisymmetric readout (equivariance).}
 Independently of the input,
@@ -309,6 +320,80 @@ prior $\pi$, with our canonical arm for reference.}
 \label{tab:contingency}
 \end{table}
 
+\subsection{$\pi$ causes it: a controlled intervention}
+\label{sec:res-intervention}
+Three corpora with a mechanism attached is still an observation. To make the claim causal we
+hold the corpus fixed and move $\pi$ directly. For a target $\pi$ we rewrite the SemEval
+training set by changing \emph{only the order in which the two arguments are presented},
+flipping a chosen subset of pairs. The passages, the pairs, the relation types, the gold
+subjects and the test set are all untouched---the generator asserts that the pair multiset, the
+passages and the directedness flags are unchanged before it writes---so $\pi$ is the single
+manipulated variable. Two seeds per point.
+
+Table~\ref{tab:sweep} and Figure~\ref{fig:sweep} give the result. Swap consistency falls
+monotonically with $\pi$, from $0.989$ at $0.50$ to $0.878$ at $0.90$, while direction accuracy
+barely moves. That gap is the practical warning in one line: between $\pi = 0.5$ and
+$\pi = 0.9$ a model loses eleven points of consistency for three points of accuracy, so a
+leaderboard reporting accuracy would show almost nothing wrong.
+
+\begin{table}[t]
+\centering\small
+\begin{tabular}{lccc}
+\toprule
+$\pi$ & Dir.\ acc. & Swap & BioRED swap \\
+\midrule
+0.50 & 0.9608 & 0.9889 & 0.9842 \\
+0.60 & 0.9604 & 0.9805 & --- \\
+0.70 & 0.9582 & 0.9628 & 0.9732 \\
+0.80 & 0.9502 & 0.9449 & --- \\
+0.90 & 0.9272 & 0.8779 & 0.8789 \\
+1.00 & \textbf{0.5845} & $\mathbf{0.0000}$ & --- \\
+\midrule
+\multicolumn{4}{l}{\emph{canonical $+$ symmetric, same training sets}} \\
+0.50 & 0.9646 & $\mathbf{1.0000}$ & --- \\
+1.00 & 0.9650 & $\mathbf{1.0000}$ & --- \\
+\bottomrule
+\end{tabular}
+\caption{$\pi$ imposed on the training set by reordering argument presentation and nothing
+else. Two seeds per point; standard deviations are at most $0.017$, and both seeds of every
+point are in Appendix~\ref{app:sweep}.}
+\label{tab:sweep}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig/fig2_pi_sweep.pdf}
+\caption{The same corpus at six priors. Consistency degrades while accuracy holds, until the
+shortcut becomes worth more than reading the passage. The constrained arm, trained on the same
+data, is flat at $1.000$ at both extremes.}
+\label{fig:sweep}
+\end{figure}
+
+The endpoint is unambiguous. At $\pi = 1.00$, where every training pair is presented
+subject-first, swap consistency is exactly $0.0000$: the model names the first-listed entity
+every time, so exchanging the arguments always changes its answer. Its accuracy is $0.5845$,
+which is exactly the test set's own positional prior to four decimal places---the signature of
+a model that has learned the shortcut and nothing else. Trained on the identical data, the
+canonical arm is untouched: $0.9650$ accuracy and $1.000$ consistency at $\pi = 1.00$ against
+$0.9646$ and $1.000$ at $\pi = 0.50$. Immunity to the corpus's positional prior is what the
+construction buys.
+
+Repeating the manipulation on BioRED reproduces the curve ($0.984 \rightarrow 0.973 \rightarrow
+0.879$ at $\pi = 0.50, 0.70, 0.90$), so the effect is not a property of one dataset.
+
+\paragraph{$\pi$ sets the price, not the outcome.} One comparison refines the account. SemEval
+forced to $\pi = 0.70$ keeps consistency at $0.963$, whereas the biodiversity corpus at its
+natural $\pi = 0.708$ collapses to $0.473$. $\pi$ therefore fixes what the shortcut is
+\emph{worth}---$\max(\pi, 1-\pi)$ on the training distribution---but whether the model takes it
+depends on what reading the passage is worth instead. In SemEval a content solution is worth
+$0.966$ against a $0.70$ shortcut and wins easily. In the biodiversity data the best content
+solution we obtain is $0.869$, and the relation surface form adds almost nothing on top of
+position: a lookup table from the relation form predicts the subject at $0.7152$ against
+$0.7075$ for answering ``first-listed'' unconditionally. The shortcut is nearly competitive
+with everything else available, and it wins. The sweep shows the same crossover within a single
+corpus: SemEval degrades gently while the shortcut is worth less than $0.966$, and collapses
+once it is worth more.
+
 \subsection{What the failure looks like}
 \label{sec:res-inconsistency}
 On the released BioREDirect model, of the $854$ BioRED test pairs for which it predicts a
@@ -370,8 +455,8 @@ SemEval & text $+$ unconstrained & 0.966 & 0.938 \\
 \bottomrule
 \end{tabular}
 \caption{Direction accuracy on gold-directed pairs and swap consistency. All BioRED and
-SemEval figures are means over three seeds; per-seed values and standard deviations are in
-the supplement.}
+SemEval figures are means over three seeds; per-seed values are in
+Appendices~\ref{app:seeds} and~\ref{app:sweep}.}
 \label{tab:main}
 \end{table}
 
@@ -421,7 +506,7 @@ text   & uncon. & 0.9658 & 0.907 & 0.9383 \\
 \end{tabular}
 \caption{Design ablation on both corpora. Canonical input fixes swap consistency at floating-point
 exactness; the symmetric head fixes undirectedness detection; neither moves accuracy. SemEval
-figures are means over three seeds (standard deviations in the supplement).}
+figures are means over three seeds; per-seed values are in Appendix~\ref{app:seeds}.}
 \label{tab:ablation}
 \end{table}
 
@@ -454,11 +539,15 @@ the markers are \citeauthor{zhou2021improved}'s with the semantics inverted. Wha
 combination, the measurement that motivates it, and the observation that the property is
 otherwise left to chance.
 
-Two findings cut against a clean story and belong in the record. The unconstrained head detects
-undirectedness \emph{better} than ours in three of four ablation cells, peaking exactly where
-it is worst on consistency: the symmetry constraint costs flexibility in the undirected class.
-And on the biodiversity set no accuracy difference between design cells is significant---only
-the consistency differences are structural.
+Two findings cut against a clean story and belong in the record. The first is a disagreement
+between our two ablations. On the $84$-item biodiversity set the unconstrained head detects
+undirectedness \emph{better} than ours, which we first read as the symmetry constraint costing
+flexibility in the undirected class; on SemEval, with $453$ undirected instances and three
+seeds per cell, the effect reverses cleanly and the symmetric branch wins by $0.043$ AUC under
+both input formats. We take the larger measurement to be the reliable one and report the
+smaller because it is what a $n=84$ ablation can do to a conclusion. The second is that no
+accuracy difference between design cells is significant on either corpus---only the
+consistency differences are structural, and that is the whole claim.
 
 \paragraph{Limitations.}
 The human direction gold for the applied setting is $84$ items: enough to show the head reads
@@ -467,8 +556,10 @@ would need on the order of $2{,}700$ annotations. BioREDirect performs a joint t
 arms perform direction given the pair; we control for the most obvious confound
 (\S\ref{sec:res-accuracy}) but not all, and we therefore do not treat that comparison as
 evidence for the design. Our context window is the infix span where the baseline uses prefix,
-suffix and infix with max-pooling. The $\pi$ relationship rests on three corpora; it is a
-mechanism with a plausible account and one successful prediction, not a law. Finally, the
+suffix and infix with max-pooling. The $\pi$ relationship is established by controlled
+manipulation on two corpora and observed on a third; what the intervention does not settle is
+the functional form, since six points on one corpus and three on another constrain the shape
+only loosely, nor how $\pi$ interacts with the many other ways a corpus can differ. Finally, the
 curated relation vocabulary shows that many relation surface forms carry no direction at
 all---$12$ of $79$ annotated forms were marked undirected by the curator---so direction is
 defined only on a subset of extracted edges, and a system reporting it everywhere is
@@ -532,6 +623,38 @@ text $+$ uncon.  & acc  & 0.9120 & 0.9129 & 0.9100 \\
 \end{tabular}
 \caption{BioRED test, $1{,}045$ gold-directed pairs, all three seeds.}
 \label{tab:seedsbiored}
+\end{table}
+
+\section{Per-seed values for the $\pi$ intervention}
+\label{app:sweep}
+Table~\ref{tab:seedssweep} gives both seeds of every point in Table~\ref{tab:sweep}. The
+$\pi = 1.00$ row is worth noting: the two seeds agree to four decimals on both metrics, which
+is what a degenerate solution looks like---there is only one way to answer ``first-listed''
+every time, so independent initialisations land on identical behaviour rather than merely
+similar behaviour.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{llcccc}
+\toprule
+ & & \multicolumn{2}{c}{accuracy} & \multicolumn{2}{c}{swap} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}
+Corpus & $\pi$ & s1 & s2 & s1 & s2 \\
+\midrule
+SemEval & 0.50 & 0.9611 & 0.9606 & 0.9925 & 0.9854 \\
+        & 0.60 & 0.9593 & 0.9615 & 0.9832 & 0.9779 \\
+        & 0.70 & 0.9580 & 0.9584 & 0.9597 & 0.9659 \\
+        & 0.80 & 0.9478 & 0.9527 & 0.9420 & 0.9478 \\
+        & 0.90 & 0.9226 & 0.9319 & 0.8659 & 0.8898 \\
+        & 1.00 & 0.5845 & 0.5845 & 0.0000 & 0.0000 \\
+\midrule
+BioRED  & 0.50 & 0.9053 & 0.9062 & 0.9866 & 0.9818 \\
+        & 0.70 & 0.9072 & 0.9072 & 0.9780 & 0.9684 \\
+        & 0.90 & 0.8842 & 0.8813 & 0.8746 & 0.8833 \\
+\bottomrule
+\end{tabular}
+\caption{The controlled $\pi$ sweep, both seeds.}
+\label{tab:seedssweep}
 \end{table}
 
 \end{document}
