@@ -1,0 +1,163 @@
+\begin{thebibliography}{22}
+\providecommand{\natexlab}[1]{#1}
+
+\bibitem[{Baldini~Soares et~al.(2019)Baldini~Soares, FitzGerald, Ling, and
+  Kwiatkowski}]{soares2019matching}
+Livio Baldini~Soares, Nicholas FitzGerald, Jeffrey Ling, and Tom Kwiatkowski.
+  2019.
+\newblock \href {https://doi.org/10.18653/v1/P19-1279} {Matching the blanks:
+  Distributional similarity for relation learning}.
+\newblock In \emph{Proceedings of the 57th Annual Meeting of the Association
+  for Computational Linguistics}, pages 2895--2905, Florence, Italy.
+  Association for Computational Linguistics.
+
+\bibitem[{Burges et~al.(2005)Burges, Shaked, Renshaw, Lazier, Deeds, Hamilton,
+  and Hullender}]{burges2005ranknet}
+Chris Burges, Tal Shaked, Erin Renshaw, Ari Lazier, Matt Deeds, Nicole
+  Hamilton, and Greg Hullender. 2005.
+\newblock Learning to rank using gradient descent.
+\newblock In \emph{Proceedings of ICML}, pages 89--96.
+
+\bibitem[{Elazar et~al.(2021)Elazar, Kassner, Ravfogel, Ravichander, Hovy,
+  Sch{\"u}tze, and Goldberg}]{elazar2021measuring}
+Yanai Elazar, Nora Kassner, Shauli Ravfogel, Abhilasha Ravichander, Eduard
+  Hovy, Hinrich Sch{\"u}tze, and Yoav Goldberg. 2021.
+\newblock Measuring and improving consistency in pretrained language models.
+\newblock \emph{Transactions of the Association for Computational Linguistics},
+  9:1012--1031.
+
+\bibitem[{Geirhos et~al.(2020)Geirhos, Jacobsen, Michaelis, Zemel, Brendel,
+  Bethge, and Wichmann}]{geirhos2020shortcut}
+Robert Geirhos, J{\"o}rn-Henrik Jacobsen, Claudio Michaelis, Richard Zemel,
+  Wieland Brendel, Matthias Bethge, and Felix~A Wichmann. 2020.
+\newblock Shortcut learning in deep neural networks.
+\newblock \emph{Nature Machine Intelligence}, 2(11):665--673.
+
+\bibitem[{Gu et~al.(2021)Gu, Tinn, Cheng, Lucas, Usuyama, Liu, Naumann, Gao,
+  and Poon}]{gu2021domain}
+Yu~Gu, Robert Tinn, Hao Cheng, Michael Lucas, Naoto Usuyama, Xiaodong Liu,
+  Tristan Naumann, Jianfeng Gao, and Hoifung Poon. 2021.
+\newblock Domain-specific language model pretraining for biomedical natural
+  language processing.
+\newblock \emph{ACM Transactions on Computing for Healthcare}, 3(1):1--23.
+
+\bibitem[{Gururangan et~al.(2018)Gururangan, Swayamdipta, Levy, Schwartz,
+  Bowman, and Smith}]{gururangan2018annotation}
+Suchin Gururangan, Swabha Swayamdipta, Omer Levy, Roy Schwartz, Samuel Bowman,
+  and Noah~A Smith. 2018.
+\newblock Annotation artifacts in natural language inference data.
+\newblock In \emph{Proceedings of NAACL-HLT}, pages 107--112.
+
+\bibitem[{Hendrickx et~al.(2010)Hendrickx, Kim, Kozareva, Nakov,
+  {\'O}~S{\'e}aghdha, Pad{\'o}, Pennacchiotti, Romano, and
+  Szpakowicz}]{hendrickx2010semeval}
+Iris Hendrickx, Su~Nam Kim, Zornitsa Kozareva, Preslav Nakov, Diarmuid
+  {\'O}~S{\'e}aghdha, Sebastian Pad{\'o}, Marco Pennacchiotti, Lorenza Romano,
+  and Stan Szpakowicz. 2010.
+\newblock {SemEval}-2010 task 8: Multi-way classification of semantic relations
+  between pairs of nominals.
+\newblock In \emph{Proceedings of the 5th International Workshop on Semantic
+  Evaluation}, pages 33--38.
+
+\bibitem[{Lai et~al.(2025)Lai, Wei, Tian, Leaman, and
+  Lu}]{lai2025directionality}
+Po-Ting Lai, Chih-Hsuan Wei, Shubo Tian, Robert Leaman, and Zhiyong Lu. 2025.
+\newblock Enhancing biomedical relation extraction with directionality.
+\newblock \emph{Bioinformatics}, 41(Supplement 1):i68--i76.
+
+\bibitem[{Luo et~al.(2022)Luo, Lai, Wei, Arighi, and Lu}]{luo2022biored}
+Ling Luo, Po-Ting Lai, Chih-Hsuan Wei, Cecilia~N Arighi, and Zhiyong Lu. 2022.
+\newblock {BioRED}: a rich biomedical relation extraction dataset.
+\newblock \emph{Briefings in Bioinformatics}, 23(5):bbac282.
+
+\bibitem[{McCoy et~al.(2019)McCoy, Pavlick, and Linzen}]{mccoy2019right}
+Tom McCoy, Ellie Pavlick, and Tal Linzen. 2019.
+\newblock Right for the wrong reasons: Diagnosing syntactic heuristics in
+  natural language inference.
+\newblock In \emph{Proceedings of ACL}, pages 3428--3448.
+
+\bibitem[{Poliak et~al.(2018)Poliak, Naradowsky, Haldar, Rudinger, and
+  Van~Durme}]{poliak2018hypothesis}
+Adam Poliak, Jason Naradowsky, Aparajita Haldar, Rachel Rudinger, and Benjamin
+  Van~Durme. 2018.
+\newblock Hypothesis only baselines in natural language inference.
+\newblock In \emph{Proceedings of *SEM}, pages 180--191.
+
+\bibitem[{Puny et~al.(2022)Puny, Atzmon, Ben-Hamu, Misra, Grover, Smith, and
+  Lipman}]{puny2022frame}
+Omri Puny, Matan Atzmon, Heli Ben-Hamu, Ishan Misra, Aditya Grover, Edward~J
+  Smith, and Yaron Lipman. 2022.
+\newblock Frame averaging for invariant and equivariant network design.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}.
+
+\bibitem[{Ribeiro et~al.(2020)Ribeiro, Wu, Guestrin, and
+  Singh}]{ribeiro2020checklist}
+Marco~Tulio Ribeiro, Tongshuang Wu, Carlos Guestrin, and Sameer Singh. 2020.
+\newblock Beyond accuracy: Behavioral testing of {NLP} models with {CheckList}.
+\newblock In \emph{Proceedings of ACL}, pages 4902--4912.
+
+\bibitem[{Rigutini et~al.(2011)Rigutini, Papini, Maggini, and
+  Scarselli}]{rigutini2011sortnet}
+Leonardo Rigutini, Tiziano Papini, Marco Maggini, and Franco Scarselli. 2011.
+\newblock {SortNet}: Learning to rank by a neural preference function.
+\newblock \emph{IEEE Transactions on Neural Networks}, 22(9):1368--1380.
+
+\bibitem[{Rink and Harabagiu(2010)}]{rink2010utd}
+Bryan Rink and Sanda Harabagiu. 2010.
+\newblock {UTD}: Classifying semantic relations by combining lexical and
+  semantic resources.
+\newblock In \emph{Proceedings of the 5th International Workshop on Semantic
+  Evaluation}, pages 256--259.
+
+\bibitem[{Sun et~al.(2019)Sun, Deng, Nie, and Tang}]{sun2019rotate}
+Zhiqing Sun, Zhi-Hong Deng, Jian-Yun Nie, and Jian Tang. 2019.
+\newblock {RotatE}: Knowledge graph embedding by relational rotation in complex
+  space.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}.
+
+\bibitem[{Trouillon et~al.(2016)Trouillon, Welbl, Riedel, Gaussier, and
+  Bouchard}]{trouillon2016complex}
+Th{\'e}o Trouillon, Johannes Welbl, Sebastian Riedel, {\'E}ric Gaussier, and
+  Guillaume Bouchard. 2016.
+\newblock Complex embeddings for simple link prediction.
+\newblock In \emph{Proceedings of ICML}, pages 2071--2080.
+
+\bibitem[{Woo et~al.(2022)Woo, Noh, and Kim}]{woo2022login}
+Sangmin Woo, Junhyug Noh, and Kangil Kim. 2022.
+\newblock Tackling the challenges in scene graph generation with
+  local-to-global interactions.
+\newblock \emph{IEEE Transactions on Neural Networks and Learning Systems}.
+\newblock ArXiv:2106.08543.
+
+\bibitem[{Yao et~al.(2019)Yao, Ye, Li, Han, Lin, Liu, Liu, Huang, Zhou, and
+  Sun}]{yao2019docred}
+Yuan Yao, Deming Ye, Peng Li, Xu~Han, Yankai Lin, Zhenghao Liu, Zhiyuan Liu,
+  Lixin Huang, Jie Zhou, and Maosong Sun. 2019.
+\newblock {DocRED}: A large-scale document-level relation extraction dataset.
+\newblock In \emph{Proceedings of ACL}, pages 764--777.
+
+\bibitem[{Yuan and Vlachos(2025)}]{yuan2025symmetry}
+Zhangdie Yuan and Andreas Vlachos. 2025.
+\newblock Capturing symmetry and antisymmetry in language models through
+  symmetry-aware training objectives.
+\newblock \emph{arXiv preprint arXiv:2504.16312}.
+
+\bibitem[{Zhang et~al.(2017)Zhang, Zhong, Chen, Angeli, and
+  Manning}]{zhang2017position}
+Yuhao Zhang, Victor Zhong, Danqi Chen, Gabor Angeli, and Christopher~D.
+  Manning. 2017.
+\newblock \href {https://doi.org/10.18653/v1/D17-1004} {Position-aware
+  attention and supervised data improve slot filling}.
+\newblock In \emph{Proceedings of the 2017 Conference on Empirical Methods in
+  Natural Language Processing}, pages 35--45, Copenhagen, Denmark. Association
+  for Computational Linguistics.
+
+\bibitem[{Zhou and Chen(2022)}]{zhou2021improved}
+Wenxuan Zhou and Muhao Chen. 2022.
+\newblock An improved baseline for sentence-level relation extraction.
+\newblock In \emph{Proceedings of AACL-IJCNLP}.
+\newblock ArXiv:2102.01373.
+
+\end{thebibliography}
