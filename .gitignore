@@ -170,3 +170,8 @@ results/reports/
 # Presentation materials
 presentation/
 data/training/curation.db
+
+# figure generators ship with their manuscript; the *[0-9].py rule above would
+# otherwise silently drop make_fig1.py and friends
+!manuscript/**/fig/*.py
+!paperA/**/fig/*.py
