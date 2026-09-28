@@ -25,7 +25,7 @@ pair is presented in. Nothing in standard practice enforces this, and we show th
 holds depends on a property of the training corpus that is never reported: the marginal
 probability that the first-listed argument is the subject. Across three corpora we find that
 when this prior is skewed ($0.708$) an unconstrained model takes the positional shortcut and
-its swap consistency falls to $0.473$---below chance; when the prior is near balanced ($0.486$,
+its swap consistency falls to $0.473$---indistinguishable from a coin flip; when the prior is near balanced ($0.486$,
 $0.544$) the model is forced to read content and reaches $0.94$--$0.97$, but never exactness.
 Holding a corpus fixed and moving only this prior---reordering argument presentation and
 nothing else---reproduces the effect on two benchmarks, and at a prior of $1.0$ swap
@@ -40,7 +40,7 @@ readout $s(h_A,h_B) = g(h_A,h_B) - g(h_B,h_A)$, paired with a \emph{symmetric} d
 score, makes it hold at every parameter setting given order-invariant encodings. The first is
 what makes the property exact---to floating-point precision, whatever the head; the second
 recovers most of it ($0.987$) when the encoder stays order-sensitive. Together they cost
-$0.54\%$ of parameters and $2\%$ of throughput.
+$1.09\%$ of parameters and $2\%$ of throughput.
 The guarantee is free rather than beneficial: direction accuracy is statistically
 indistinguishable from the unconstrained arm on both public benchmarks
 ($0.911$ vs $0.912$ on BioRED, $p=0.79$; $0.963$ vs $0.966$ on
@@ -71,8 +71,9 @@ Write $\pi$ for the marginal probability that the first-listed argument is the s
 three corpora with $\pi = 0.708$, $0.544$ and $0.486$, an unconstrained model trained on
 order-sensitive input reaches swap consistency $0.473$, $0.938$ and $0.969$ respectively
 (Figure~\ref{fig:pi}). When
-$\pi$ is skewed the model takes the positional shortcut and performs \emph{below chance} on
-consistency; when $\pi$ is balanced it is forced to read content and approximates the property
+$\pi$ is skewed the model takes the positional shortcut and its consistency is
+\emph{indistinguishable from chance} ($0.473$, $n=84$, one-sided binomial against $0.5$ gives
+$p = 0.37$: we claim chance, not worse than chance); when $\pi$ is balanced it is forced to read content and approximates the property
 without ever attaining it. The released BioREDirect model \citep{lai2025directionality} sits at
 $0.700$ on its own benchmark.
 
@@ -81,7 +82,7 @@ $0.700$ on its own benchmark.
 \includegraphics[width=\columnwidth]{fig/fig1_pi_consistency.pdf}
 \caption{Swap consistency of an unconstrained model on order-sensitive input, against the
 training corpus's positional prior $\pi$. The property is acquired only when the corpus
-withholds the positional shortcut; at $\pi = 0.708$ it falls below chance. Bars span three
+withholds the positional shortcut; at $\pi = 0.708$ it reaches chance. Bars span three
 seeds (biodiversity is a single run). Our canonical arm is at $1.000$ for every $\pi$, by
 construction rather than by training.}
 \label{fig:pi}
@@ -106,7 +107,7 @@ Our claims, each supported on more than one corpus:
       (\S\ref{sec:res-contingency}) that \emph{causes} it: holding a corpus fixed and moving
       only the statistic reproduces the effect on two benchmarks
       (\S\ref{sec:res-intervention}).
-\item \textbf{Exactness is cheap.} $0.54\%$ additional parameters, $2\%$ of throughput, holding
+\item \textbf{Exactness is cheap.} $1.09\%$ additional parameters, $2\%$ of throughput, holding
       to floating-point precision rather than approximately (\S\ref{sec:res-guarantee}).
 \item \textbf{It is free.} Direction accuracy is statistically indistinguishable from the
       unconstrained arm on both public benchmarks (\S\ref{sec:res-accuracy}). We claim no
@@ -265,11 +266,14 @@ relation surface form---and lets one small head serve every relation in the sche
 
 \subsection{Model, cost and protocol}
 \label{sec:method-cost}
-The encoder is BiomedBERT-base \citep{gu2021domain} in all arms. The direction head is
-$594{,}465$ parameters, $0.54\%$ of the encoder, costing $2\%$ of CPU throughput ($33.0$
-against $33.8$ pairs/s on eight threads). Arms within a comparison share encoder, optimiser,
-schedule, epochs and data, differing only on the axis under test. We report means over three
-seeds.
+The encoder is BiomedBERT-base \citep{gu2021domain} in all arms. The two-branch head of
+Eqs.~\ref{eq:antisym}--\ref{eq:sym} is $1{,}189{,}170$ parameters, $1.09\%$ of the encoder,
+against $595{,}251$ ($0.54\%$) for the single-branch unconstrained head it replaces: the symmetric
+directedness branch roughly doubles the head, which is still one part in ninety of the model.
+Throughput cost is $2\%$ on eight CPU threads ($33.0$ against $33.8$ pairs/s), measured on the
+unconstrained configuration; the second branch is evaluated in the same forward pass and we did
+not re-measure it separately. Arms within a comparison share encoder, optimiser, schedule, epochs
+and data, differing only on the axis under test. We report means over three seeds.
 
 \subsection{Corpora}
 \label{sec:method-data}
@@ -364,22 +368,49 @@ point are in Appendix~\ref{app:sweep}.}
 \centering
 \includegraphics[width=\columnwidth]{fig/fig2_pi_sweep.pdf}
 \caption{The same corpus at six priors. Consistency degrades while accuracy holds, until the
-shortcut becomes worth more than reading the passage. The constrained arm, trained on the same
-data, is flat at $1.000$ at both extremes.}
+shortcut becomes worth more than reading the passage. The constrained arm is flat at $1.000$ at
+both extremes \emph{by construction}---canonicalisation makes its encoded input identical at
+every $\pi$---so that line confirms the implementation rather than testing a hypothesis.}
 \label{fig:sweep}
 \end{figure}
 
 The endpoint is unambiguous. At $\pi = 1.00$, where every training pair is presented
 subject-first, swap consistency is exactly $0.0000$: the model names the first-listed entity
 every time, so exchanging the arguments always changes its answer. Its accuracy is $0.5845$,
-which is exactly the test set's own positional prior to four decimal places---the signature of
-a model that has learned the shortcut and nothing else. Trained on the identical data, the
-canonical arm is untouched: $0.9650$ accuracy and $1.000$ consistency at $\pi = 1.00$ against
-$0.9646$ and $1.000$ at $\pi = 0.50$. Immunity to the corpus's positional prior is what the
-construction buys.
+which is exactly the test set's own positional prior to four decimal places---the signature of a
+model that has learned the shortcut and nothing else. Both seeds agree to four decimals on both
+quantities, which is what a degenerate solution looks like: there is only one way to answer
+``first-listed'' every time.
+
+The canonical arm trained on the same $\pi = 1.00$ data is unaffected ($0.9650$ accuracy,
+$1.000$ consistency, against $0.9646$ and $1.000$ at $\pi = 0.50$). \textbf{We are explicit that
+this is not an experimental control.} Canonicalisation sorts the pair before encoding, so the
+intervention---which only changes which argument is presented first---cannot change the canonical
+arm's input at all: we verified that the encoded training set is byte-identical at every $\pi$ we
+generated, and the residual $0.0004$ between the two runs is training nondeterminism, not an
+effect of $\pi$. The immunity is a theorem, and the two runs confirm the implementation realises
+it rather than demonstrating it empirically. We report them because an implementation claim needs
+checking, not because they are evidence about $\pi$.
 
 Repeating the manipulation on BioRED reproduces the curve ($0.984 \rightarrow 0.973 \rightarrow
 0.879$ at $\pi = 0.50, 0.70, 0.90$), so the effect is not a property of one dataset.
+
+\paragraph{The cheap rival: just balance $\pi$.}
+If a skewed prior is the problem, the obvious fix costs nothing and needs no architecture ---
+present half the training pairs in each order. A reviewer should ask why that is not the whole
+answer, and our own sweep contains the reply. The $\pi = 0.50$ row \emph{is} that fix, applied as
+favourably as possible: not merely balanced but balanced exactly, by construction, on a corpus
+whose natural prior was already close. It reaches swap consistency $0.989 \pm 0.005$, not $1$.
+
+So data balancing recovers most of the property and cannot deliver it. Whether the remaining
+$1.1\%$ matters depends on the consumer. For a leaderboard it plainly does not. For the use that
+motivated this work---writing edges into a knowledge base---each inconsistent pair is a stored
+contradiction that a downstream query can surface as two incompatible facts, and the rate does not
+fall with corpus size, so it scales with the graph. Balancing also requires knowing $\pi$, having
+write access to the training data, and retraining; canonicalisation is a change to the input
+formatting that costs one sort and holds whatever the corpus turns out to contain. We regard
+balancing as a sensible default that every corpus builder should adopt, and as a different thing
+from a guarantee.
 
 \paragraph{$\pi$ sets the price, not the outcome.} One comparison refines the account. SemEval
 forced to $\pi = 0.70$ keeps consistency at $0.963$, whereas the biodiversity corpus at its
@@ -549,7 +580,7 @@ smaller because it is what a $n=84$ ablation can do to a conclusion. The second 
 accuracy difference between design cells is significant on either corpus---only the
 consistency differences are structural, and that is the whole claim.
 
-\paragraph{Limitations.}
+\section*{Limitations}
 The human direction gold for the applied setting is $84$ items: enough to show the head reads
 the passage, not enough to separate it from a good dependency-parse rule, which we estimate
 would need on the order of $2{,}700$ annotations. BioREDirect performs a joint task while our
