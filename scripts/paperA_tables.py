@@ -10,6 +10,8 @@ Decisions fixed in advance, not chosen on the reporting set:
   * Biodiversity operating points are block-held-out: a threshold is fitted on two of the three
     source blocks and applied to the third. BioRED operating points are pre-specified: the mean
     of the three checkpoints' own development thresholds.
+  * BioRED follows the BioREDirect/BC8 protocol: train on BioRED train+dev, select epochs and
+    thresholds on the BioRED test split, report on the BioCreative VIII test set (400 abstracts).
   * The three arms share an encoder (BiomedBERT-base), a corpus and a recipe; only the input
     differs: passage only / pair + passage / pair + relation + passage.
 
@@ -40,7 +42,9 @@ OUT = REPO / "results/paperA_v2"
 GRID = np.arange(0.01, 1.00, 0.01)
 ARMS_BIODIV = {"sentence": "models/sentence_baseline/xenc_s{}", "pair": "models/pair_baseline/xenc_s{}",
                "triple": "models/student_v3/xenc_s{}"}
-ARMS_BIORED = {"sentence": "models/biored_verify/sentence_s{}", "pair": "models/biored_verify/pair_s{}"}
+ARMS_BIORED = {"sentence": "models/biored_bc8/sentence_s{}", "pair": "models/biored_bc8/pair_s{}",
+               "pair_mark": "models/biored_bc8/pair_mark_s{}", "mark_canon": "models/biored_bc8/mark_canon_s{}"}
+LLM_DIR = REPO / "results/paperA_v2/llm"
 
 
 def mcnemar(a_pred, b_pred, y):
@@ -110,6 +114,7 @@ def biodiv(dev):
     out["n_ge3_taxa_positives"] = int(y[multi].sum())
     out["mcnemar"] = {f"{b}_vs_{a}": dict(zip(("p", "fixes", "breaks"), mcnemar(PRED[a], PRED[b], y)))
                       for a, b in (("sentence", "pair"), ("sentence", "triple"), ("pair", "triple"))}
+    out["llm"] = llm_rows("biodiv", y, S, multi, blocks)
 
     # operating curves
     out["curve"] = {arm: [{"tau": float(t), **prf(y, (S[arm] >= t).astype(int))}
@@ -153,7 +158,7 @@ def biodiv(dev):
 
 
 def biored(dev):
-    d = pd.read_csv(REPO / "data/benchmarks/biored_verify/test.csv")
+    d = pd.read_csv(REPO / "data/benchmarks/biored_bc8/test.csv")
     d = d.rename(columns={"source_species": "species1", "target_species": "species2",
                           "interaction_type": "relation", "text": "sentence"})
     d["relation"] = d.relation.fillna("")
@@ -175,14 +180,56 @@ def biored(dev):
                     "auprc_ge3_concepts_per_seed": [float(ap(y[multi], p[multi])) for p in per]}
         np.save(OUT / f"S_biored_{arm}.npy", S[arm])
     out["mcnemar_pair_vs_sentence"] = dict(zip(("p", "fixes", "breaks"), mcnemar(PRED["sentence"], PRED["pair"], y)))
+    for arm in ("pair_mark", "mark_canon"):
+        out[f"mcnemar_{arm}_vs_pair"] = dict(zip(("p", "fixes", "breaks"), mcnemar(PRED["pair"], PRED[arm], y)))
     out["base_rate"] = float(y.mean())
+    out["llm"] = llm_rows("biored", y, S, multi)
+    return out
+
+
+def llm_rows(bench, y, S, multi=None, blocks=None):
+    """Zero-shot local-LLM rows (scripts/llm_baseline.py), with the trained arms re-scored on
+    exactly the LLM's rows so every number in a comparison shares its items."""
+    out = {}
+    for f in sorted(LLM_DIR.glob(f"{bench}_*.csv")):
+        o = pd.read_csv(f)
+        idx = o.row.to_numpy() if "row" in o else np.arange(len(o))
+        assert (o.label.to_numpy() == y[idx]).all(), f"{f.name}: rows misaligned"
+        r = {"n": int(len(o)), "auprc": float(ap(o.label, o.p_yes)),
+             "greedy": prf(o.label.to_numpy(), o.verdict.to_numpy())}
+        if blocks is not None:                 # the trained arms' protocol: block-held-out thresholds
+            pred, thr = block_held_out(o.label.to_numpy(), o.p_yes.to_numpy(), blocks[idx])
+            r["block_held_out"] = {**prf(o.label.to_numpy(), pred), "thresholds": thr}
+        if multi is not None:
+            m = multi[idx]
+            r["auprc_ge3"] = float(ap(o.label[m], o.p_yes[m]))
+            r["auprc_le2"] = float(ap(o.label[~m], o.p_yes[~m])) if (~m).sum() and o.label[~m].nunique() > 1 else None
+        r["trained_arms_same_rows"] = {arm: float(ap(y[idx], S[arm][idx])) for arm in S}
+        out[f.stem] = r
     return out
 
 
 def main() -> None:
     ap_ = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap_.add_argument("--bench", choices=("biodiv", "biored"), required=True)
+    ap_.add_argument("--llm-only", action="store_true",
+                     help="recompute only the LLM rows, from the saved S_*.npy of an earlier full run")
     a = ap_.parse_args()
+    if a.llm_only:
+        res = json.loads((OUT / f"tables_{a.bench}.json").read_text())
+        S = {f.stem.split("_", 2)[2]: np.load(f) for f in OUT.glob(f"S_{a.bench}_*.npy")}
+        if a.bench == "biodiv":
+            d = pd.read_csv(REPO / "data/evaluation/unified_test_set.csv")
+            scan = pd.read_csv(REPO / "results/test_contamination_scan.csv")
+            d = d[~(d.in_train.to_numpy() | (scan.maxj.to_numpy() > 0.5))].reset_index(drop=True)
+            nt = pd.read_csv(REPO / "results/paperA_rebuild_2026-09-28/n_taxa_per_row.csv")
+            res["llm"] = llm_rows("biodiv", d.label.to_numpy(), S, nt.n_taxa.to_numpy() >= 3, d.source.to_numpy())
+        else:
+            d = pd.read_csv(REPO / "data/benchmarks/biored_bc8/test.csv")
+            res["llm"] = llm_rows("biored", d.label.to_numpy(), S, d.n_concepts.to_numpy() >= 3)
+        (OUT / f"tables_{a.bench}.json").write_text(json.dumps(res, indent=2, default=float))
+        print(json.dumps(res["llm"], indent=1, default=float))
+        return
     OUT.mkdir(parents=True, exist_ok=True)
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     torch.set_float32_matmul_precision("high")

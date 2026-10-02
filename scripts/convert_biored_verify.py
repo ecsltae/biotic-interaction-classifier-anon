@@ -17,9 +17,15 @@ Output columns match experiments/multitask/train_student.py:
   text, source_species, interaction_type, target_species, label
 plus pmid, type1, type2, n_concepts (distinct concepts in the sentence) and sent_id.
 
+Protocols
+  original  train -> train, dev -> dev, test -> test (Luo et al., 2022 splits)
+  bc8       train+dev -> train, test -> dev, BioCreative VIII test (400 abstracts) -> test:
+            the protocol of BioREDirect (Lai et al.), so document-level scores line up with
+            its Table 2. Relation-bearing type pairs always come from the training split.
+
 Usage
-  python3 scripts/convert_biored_verify.py \
-      --src data/raw/bioredirect --out data/benchmarks/biored_verify
+  python3 scripts/convert_biored_verify.py --protocol bc8 \
+      --src data/raw/bioredirect --out data/benchmarks/biored_bc8
 """
 from __future__ import annotations
 
@@ -103,7 +109,8 @@ def candidates(docs, type_pairs, nlp) -> pd.DataFrame:
                              "text": sent.text.strip(), "source_species": a["mention"],
                              "interaction_type": "", "target_species": b["mention"],
                              "type1": a["type"], "type2": b["type"],
-                             "label": int(related(d, a, b)), "n_concepts": n})
+                             "label": int(related(d, a, b)), "n_concepts": n,
+                             "cid1": concept_key(a), "cid2": concept_key(b)})
     return pd.DataFrame(rows)
 
 
@@ -111,12 +118,15 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--src", default="data/raw/bioredirect")
     ap.add_argument("--out", default="data/benchmarks/biored_verify")
+    ap.add_argument("--protocol", choices=("original", "bc8"), default="original")
     a = ap.parse_args()
     import spacy
     nlp = spacy.load("en_core_web_sm", disable=["ner", "lemmatizer"])
     src, out = Path(a.src), Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    splits = {s: read_pubtator(src / f"bioredirect_{s}.pubtator") for s in ("train", "dev", "test")}
+    files = ({"train": "train", "dev": "dev", "test": "test"} if a.protocol == "original"
+             else {"train": "train_dev", "dev": "test", "test": "bc8_test"})
+    splits = {s: read_pubtator(src / f"bioredirect_{f}.pubtator") for s, f in files.items()}
     type_pairs = relation_type_pairs(splits["train"])
     print(f"relation-bearing type pairs (from train): {len(type_pairs)}")
     for s, docs in splits.items():
