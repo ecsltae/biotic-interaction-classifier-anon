@@ -23,8 +23,9 @@ import matplotlib.pyplot as plt  # noqa: E402
 from sklearn.metrics import f1_score, precision_score, recall_score  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[2]
-SCORES = REPO / "results/paperA_rebuild_2026-09-28/S_Verifier-PC_ensemble.npy"
-BASELINE = REPO / "results/paperA_rebuild_2026-09-28/S_Sentence-baseline_ensemble.npy"
+SCORES = REPO / "results/paperA_v2/S_biodiv_pair.npy"          # pair-conditioned, order-free
+BASELINE = REPO / "results/paperA_v2/S_biodiv_sentence.npy"
+TABLES = REPO / "results/paperA_v2/tables_biodiv.json"
 
 BLUE, VERM, GREEN, GREY, INK = "#0072B2", "#D55E00", "#009E73", "#9a9a95", "#1a1a19"
 plt.rcParams.update({
@@ -54,21 +55,18 @@ def main(out_stem="fig4_threshold", wide=False):
     fig, ax = plt.subplots(figsize=(6.6, 2.5) if wide else (3.35, 2.6))
     ax.plot(grid, P, color=BLUE, lw=1.4, label="precision")
     ax.plot(grid, R, color=VERM, lw=1.4, label="recall")
-    ax.plot(grid, F, color=GREEN, lw=1.6, label="F1, triple-query")
+    ax.plot(grid, F, color=GREEN, lw=1.6, label="F1, pair-conditioned")
 
     # the controlled baseline: same data and encoder, passage only
     ax.plot(grid, FB, color=GREEN, lw=1.1, ls=(0, (4, 2)), zorder=2, label="F1, sentence-only baseline")
 
-    # the reported operating point, fitted on the other two blocks
-    tau = 0.04
-    i = int(np.argmin(np.abs(grid - tau)))
-    ax.axvline(tau, color=GREY, lw=0.8, ls=(0, (3, 2)), zorder=1)
-    ax.plot([tau], [F[i]], marker="o", ms=4.2, color=GREEN, mec="white", mew=0.9, zorder=6)
-    ax.annotate(f"$\\tau={tau:.2f}$", (tau, F[i]),
-                xytext=(0.135, 0.975), textcoords="data", fontsize=6.6, color=INK,
-                ha="left", va="center",
-                arrowprops=dict(arrowstyle="-", color=GREY, lw=0.7,
-                                shrinkA=1.5, shrinkB=3.0))
+    # the reported operating points: one threshold per source block, each fitted on the other
+    # two. They are not one number, so the figure shows their range rather than a single marker.
+    import json
+    thr = json.loads(TABLES.read_text())["pair"]["thresholds"]
+    lo, hi = min(thr.values()), max(thr.values())
+    ax.axvspan(lo - 0.004, hi + 0.004, color=GREY, alpha=0.18, lw=0, zorder=0)
+    ax.text((lo + hi) / 2, 0.985, "block-held-out", color=INK, fontsize=6.3, ha="center", va="top")
 
     ax.set_xlabel("decision threshold $\\tau$")
     ax.set_ylabel("")

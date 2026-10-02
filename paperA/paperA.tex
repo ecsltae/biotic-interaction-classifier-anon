@@ -17,7 +17,7 @@
 \usepackage{microtype}
 
 \title{Which Pair Is It About?\\
-Triple-Conditioned Verification of Literature-Mined Biotic Interactions}
+Pair-Conditioned Verification of Literature-Mined Biotic Interactions}
 
 \author{Anonymous ACL submission}
 
@@ -27,19 +27,20 @@ Triple-Conditioned Verification of Literature-Mined Biotic Interactions}
 \begin{abstract}
 Literature-mining pipelines that populate biotic-interaction databases propose candidate
 (taxon, relation, taxon) triples by co-occurrence, then decide which to keep with a
-\emph{sentence-level} classifier: does this passage describe an interaction? That is the wrong
-question. A candidate is retrieved precisely because its passage already names two taxa and an
-interaction term, so what needs deciding is whether the passage asserts \emph{this} relation between
+\emph{sentence-level} classifier: does this passage describe an interaction? A candidate is retrieved
+precisely because its passage names two taxa near an interaction term, so that question is answered
+before it is asked; what needs deciding is whether the passage asserts an interaction between
 \emph{these two}. We test the claim with a controlled comparison: one encoder, one 48k-row
-teacher-labelled corpus, three seeds, differing only in whether the model sees the candidate
-triple. On 437 expert-graded candidates the triple-conditioned verifier raises per-seed AUPRC from
-$0.851$ to $0.910$ and F1 from $0.775$ to $0.860$ (76 items fixed against 30 broken, McNemar
-$p = 1.2\times10^{-5}$), dominating the sentence-level model at every threshold. The gain is where the argument puts it:
-$+0.095$ AUPRC on passages that name three or more taxa, and none at all on passages that name
-two. We decompose the residual
-false positives by mechanism, show that eight deterministic candidate rules validated on training
-data before evaluation raise precision from $0.825$ to $0.878$, and report the deployed two-head
-configuration: F1 $0.909$ at a pre-specified threshold, at 33 candidates per second on a CPU.
+teacher-labelled corpus, three seeds, differing only in what the model is shown. On 437
+expert-graded candidates, telling the model which pair the candidate is about raises AUPRC from
+$0.851$ to $0.919$ and F1 from $0.775$ to $0.871$ (75 items fixed against 22 broken, McNemar
+$p = 1.3\times10^{-7}$), at every one of 99 thresholds; adding the relation term to the query buys
+nothing further. The same comparison on the public BioRED corpus, with candidates built the same
+way, gives $0.783 \to 0.876$ ($p = 4.5\times10^{-71}$), and the gain lies where the argument puts it:
+none on sentences that name two entities, $+0.106$ on sentences that name more. We analyse the
+errors that remain, test deterministic candidate rules, and report the deployed model: a 110M-parameter
+pair-conditioned verifier that also labels interaction direction in four categories and runs at 33
+candidates per second on a CPU.
 \end{abstract}
 
 \section{Introduction}
@@ -56,29 +57,34 @@ naming two taxa near an interaction term yields a candidate whether or not it as
 interaction between those two. Every candidate therefore arrives already satisfying, lexically, the
 property a sentence-level classifier was trained to detect --- in the pipeline we study, on all
 $175{,}588$ candidates of its retrieval pool (\S\ref{sec:setting}). What actually needs deciding is
-narrower: whether the passage asserts \emph{this} relation between \emph{these two} taxa. When a
-passage names three organisms, it can support one candidate and refute the other two, and a
-classifier that sees only the passage must give all three the same answer.
+narrower: whether the passage asserts an interaction between \emph{these two} taxa. When a passage
+names three organisms it can support one candidate and refute the other two, and a classifier that
+sees only the passage must give all three the same answer.
 
 We make this argument testable rather than rhetorical. We train the same 110M-parameter encoder on
-the same teacher-labelled corpus twice, once reading the passage alone and once reading the
-candidate triple as a query, and compare them on a 437-item benchmark graded by a domain expert
-(\S\ref{sec:results}). Everything except the input is held fixed, so the difference between the two
-is attributable to the formulation and to nothing else. The triple-conditioned model wins by a wide
-and significant margin, and the gain is located exactly where the argument predicts: it is
-$+0.095$ AUPRC on passages naming three or more taxa and $-0.002$ on passages naming two or fewer.
+the same teacher-labelled corpus three times --- reading the passage alone, the passage with the
+candidate pair, and the passage with the whole candidate triple --- and compare them on a 437-item
+benchmark graded by a domain expert (\S\ref{sec:results}). Everything except the input is held
+fixed, so differences between them are attributable to the formulation and to nothing else. Telling
+the model which pair it is judging wins by a wide and significant margin; telling it the relation
+term as well does not add to it. We then rebuild the setting on BioRED \citep{luo2022biored}, a public
+corpus with gold entity and relation annotations, and the result replicates there with the gain in
+the predicted place: absent on sentences that name only two entities, large on sentences that name
+more.
 
 \paragraph{Contributions.}
 \begin{itemize}\itemsep1pt\parskip0pt\topsep2pt
-\item A controlled comparison of the sentence-level and triple-conditioned formulations on one
-      encoder and one corpus, with the gain located where the argument says it should be
-      (\S\ref{sec:results}).
-\item A mechanism analysis of the errors that survive, including a bound showing that checking the
-      triple's components separately cannot reach the largest class (\S\ref{sec:decomp}).
-\item Deterministic candidate rules, each validated on 42k training rows before evaluation, that
-      raise precision by $0.053$ at a recall cost of $0.020$ (\S\ref{sec:rules}).
-\item A deployed two-head configuration, its threshold fixed in advance, running on a CPU
-      (\S\ref{sec:deploy}), and four negative results (Appendix~\ref{sec:negative}).
+\item A controlled comparison of sentence-level, pair-conditioned and triple-conditioned
+      verification on one encoder and one corpus, replicated on a public benchmark, with the gain
+      located where the argument says it should be (\S\ref{sec:results}).
+\item An account of what the pair query buys --- disambiguation between the pairs a passage names,
+      and a check on candidates whose arguments are not organisms --- and a bound showing that
+      checking a triple's components separately cannot reach the largest error class
+      (\S\ref{sec:results}, \S\ref{sec:decomp}).
+\item Deterministic candidate rules, validated on 42k training rows before evaluation, measured as
+      a small precision gain rather than a large one (\S\ref{sec:rules}).
+\item A deployed configuration with a fixed threshold, four-way direction output and CPU
+      throughput, and five negative results (\S\ref{sec:deploy}, Appendix~\ref{sec:negative}).
 \end{itemize}
 
 \section{Setting}
@@ -91,6 +97,15 @@ taxon surface forms against a taxonomy and interaction surface forms against a v
 from the Relation Ontology, and emits every resulting $(s_1, r, s_2)$ combination with the passage,
 the matched surface strings, and their canonical forms. This is the application we build for, and
 we use it only as the source of candidates: no component of it is a baseline in this paper.
+
+The problem this paper addresses was diagnosed by BiotXplorer's own authors.
+\citet{ruch2024biotxplorer} graded 100 random BiotXplorer triples, found that the system identified
+the interacting species with a precision of 31\%, and named the main cause of error: ``instances
+where passages listed multiple species, which can be automatically filtered out.'' We take the
+diagnosis as given and question only the remedy. On our benchmark, passages naming three or more
+taxa hold 154 of the 246 interacting pairs (63\%), so filtering them out would discard most of what
+the pipeline exists to find. The alternative we test is to keep those passages and decide each
+candidate in them separately.
 
 \paragraph{Why the sentence-level question is constant here.}
 We pulled the retrieval pool in full: $175{,}588$ candidate rows over $165{,}325$ distinct passages
@@ -106,8 +121,12 @@ One benchmark of 437 rows, 246 positive, in three blocks of different provenance
 block rather than pooling them into a number that hides their disagreement.
 \textsc{Biotx100} is retrieved candidates, each the top-ranked candidate for its passage, graded by
 a domain expert on four axes: whether each taxon surface form was correctly resolved, whether the
-relation was correct, and whether the whole triple is supported by its passage. After removing three
-training duplicates it contributes 97 rows, 75 positive. \textsc{Reject50} is candidates the
+relation was correct, and whether the whole triple is supported by its passage. Half were drawn
+from pairs already recorded in GloBI and half at random, and after removing three training
+duplicates it contributes 97 rows: 50 GloBI-matched with 43 positive, 47 random with 32 positive.
+It is therefore enriched for known interactors and for top-ranked candidates, which is why its
+positive rate is far above the 31\% \citet{ruch2024biotxplorer} measured on random triples at any
+rank. \textsc{Reject50} is candidates the
 retrieval pipeline discarded, curated for the ones it should have kept: 41 clean rows, 9 positive.
 It is the paper's recall-side instrument. \textsc{Test299} is 299 pair-level items from expert
 curation, $0.542$ positive, and is where passages most often name several taxa.
@@ -132,11 +151,26 @@ advance. A model's reported operating point is either \textbf{pre-specified} ---
 training-development split, never on the benchmark --- or \textbf{block-held-out}: fitted on two of
 the three source blocks and applied to the third, so that every row is scored by a threshold that
 never saw it and every row is used. Comparisons between models use the same policy for both.
-Intervals are $20{,}000$-sample bootstraps or Clopper--Pearson; McNemar tests carry a continuity
-correction. Where three seeds exist we report the per-seed mean and standard deviation, and where we
+Intervals are $20{,}000$-sample bootstraps or Clopper--Pearson; McNemar tests
+\citep{mcnemar1947note} carry a continuity correction. Where three seeds exist we report the per-seed mean and standard deviation, and where we
 report the average of three checkpoints' probabilities we call it an ensemble. The benchmark ships
 an \texttt{in\_train} flag on 9 rows; a 5-gram Jaccard scan against all 48{,}338 training passages
 finds 3 more at Jaccard $1.000$, all in \textsc{Biotx100}. All 12 are excluded throughout.
+
+The gold is pair-level and therefore order-free: \emph{do these two taxa interact}, in either
+direction. A model that reads the candidate in order is scored the same way, as the higher of its
+two scores over the two argument orders --- the probability that the pair interacts in at least one
+direction. We fix this before scoring because the alternative penalises a model for rejecting a
+correctly paired candidate whose stated relation runs backwards, which the gold does not count as an
+error. The sentence-level model reads no candidate and is order-free already.
+
+Two things about this benchmark's history should be on the record. It is not untouched: during the
+development of the verifier it was scored for roughly a hundred model configurations, so the
+comparisons in this paper are between recipes chosen with it in view, and the controlled comparison
+of \S\ref{sec:results} is the result we would expect to survive that. And one gold label has been
+changed since the benchmark was frozen: a \textsc{Test299} candidate pairing \emph{Acanthamoeba}
+with \emph{Pseudomonas}, revised from positive to negative after the curator, annotating direction
+without model scores, recorded that the two co-occur in a shared host rather than interacting.
 
 \section{Two formulations, one corpus}
 \label{sec:verifier}
@@ -155,75 +189,143 @@ benchmark (disjoint passages): a 20{,}000-row base sample, 16{,}546 \emph{pair-c
 pair-contrast block is what gives the corpus its point: 2{,}017 passages enter as several rows that
 are identical in the passage and differ only in the candidate and the label.
 
-\paragraph{The two models.}
-Both are BiomedBERT-base cross-encoders (110M parameters), trained for three epochs on that corpus
-with the same optimiser and schedule, three seeds each, with a development split grouped on taxon
-pair so that no pair spans training and development. They differ in one respect.
+\paragraph{Three models, one recipe.}
+All three are cross-encoders on BiomedBERT-base \citep{gu2021domain}
+(\texttt{microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext}, 110M parameters), distilled
+from the teacher's labels \citep{bucilua2006model,hinton2015distilling} with the same recipe:
+AdamW at learning rate $2\times10^{-5}$ and weight decay $0.01$, a linear schedule with 10\% warm-up,
+batch size 32, inputs of at most 256 wordpieces, three epochs, gradient clipping at 1.0, and the
+checkpoint with the best development AUPRC, on a 10\% development split grouped by taxon pair so
+that no pair spans training and development. Three seeds each; one run takes about four minutes on a
+single A100. They differ only in their input.
 The \textbf{sentence-level baseline} reads the passage alone. It is the formulation a pipeline
 reaches for first, and on rows that share a passage it is shown the same input with different
-labels, which it cannot fit. The \textbf{triple-conditioned verifier} reads the candidate
-$s_1$ \texttt{[SEP]} $r$ \texttt{[SEP]} $s_2$ as segment~A and the passage as segment~B
-\citep{nogueira2019passage}, so its input moves when the candidate moves.
+labels, which it cannot fit. The \textbf{pair-conditioned} model reads the two candidate taxa,
+$s_1$ \texttt{[SEP]} $s_2$, as segment~A and the passage as segment~B
+\citep{nogueira2019passage}. The \textbf{triple-conditioned verifier} reads the whole candidate,
+$s_1$ \texttt{[SEP]} $r$ \texttt{[SEP]} $s_2$. The middle model separates what the pair buys from
+what the relation adds.
 
 \section{Results}
 \label{sec:results}
 
 \begin{table}[t]\centering\small
-\setlength{\tabcolsep}{3.6pt}
+\setlength{\tabcolsep}{3.2pt}
 \begin{tabular}{lcccc}
 \toprule
 System & AUPRC & P & R & F1 \\
 \midrule
-Accept everything          & 0.563 & 0.563 & 1.000 & 0.720 \\
-Sentence-level baseline    & $0.851_{\pm .006}$ & 0.730 & 0.825 & 0.775 \\
-Triple-conditioned verifier & $\mathbf{0.910}_{\pm .006}$ & \textbf{0.825} & \textbf{0.898} & \textbf{0.860} \\
+Accept everything  & 0.563 & 0.563 & 1.000 & 0.720 \\
+Sentence-level     & $0.851_{\pm .006}$ & 0.730 & 0.825 & 0.775 \\
+Pair-conditioned   & $\mathbf{0.919}_{\pm .005}$ & \textbf{0.849} & \textbf{0.894} & \textbf{0.871} \\
+Triple-conditioned & $0.909_{\pm .004}$ & 0.820 & 0.886 & 0.852 \\
 \bottomrule
 \end{tabular}
 \caption{The controlled comparison on 437 rows: one encoder, one corpus, only the input differs.
 AUPRC is the per-seed mean $\pm$ standard deviation over three seeds; P/R/F1 are three-checkpoint
-ensembles at block-held-out thresholds. The verifier fixes 76 items the baseline gets wrong and
-breaks 30 it gets right (McNemar $p = 1.2\times10^{-5}$).}
+ensembles at block-held-out thresholds. Against the sentence-level model, the pair-conditioned one
+fixes 75 items and breaks 22 (McNemar $p = 1.3\times10^{-7}$) and the triple-conditioned one fixes 74
+and breaks 32 ($p = 6.8\times10^{-5}$); triple against pair, 20 fixed and 31 broken ($p = 0.16$). Per-seed values are in Appendix~\ref{app:seeds}.}
 \label{tab:main}
 \end{table}
 
 \begin{table}[t]\centering\small
-\setlength{\tabcolsep}{4pt}
+\setlength{\tabcolsep}{3.4pt}
 \begin{tabular}{lrccc}
 \toprule
-Passages & $n$ & Sentence & Triple & Gain \\
+Candidates & $n$ & Sentence & Pair & Triple \\
 \midrule
-naming $\le 2$ taxa & 161 & 0.876 & 0.874 & $-0.002$ \\
-naming $\ge 3$ taxa & 276 & 0.846 & \textbf{0.941} & $\mathbf{+0.095}$ \\
+passage names $\le 2$ taxa & 161 & 0.876 & \textbf{0.918} & 0.879 \\
+passage names $\ge 3$ taxa & 276 & 0.846 & \textbf{0.930} & \textbf{0.930} \\
 \midrule
-\textsc{Test299}  & 299 & 0.819 & \textbf{0.925} & $+0.106$ \\
-\textsc{Biotx100} &  97 & \textbf{0.954} & 0.939 & $-0.015$ \\
-\textsc{Reject50} &  41 & 0.465 & \textbf{0.497} & $+0.032$ \\
+both arguments are taxa, $\le 2$ & 33 & 0.945 & \textbf{0.970} & --- \\
+both arguments are taxa, $\ge 3$ & 227 & 0.878 & \textbf{0.947} & --- \\
+an argument is not a taxon, $\le 2$ & 128 & 0.856 & \textbf{0.908} & --- \\
+an argument is not a taxon, $\ge 3$ & 49 & 0.628 & \textbf{0.808} & --- \\
+\midrule
+\textsc{Test299}  & 299 & 0.819 & \textbf{0.922} & 0.915 \\
+\textsc{Biotx100} &  97 & 0.954 & \textbf{0.970} & 0.938 \\
+\textsc{Reject50} &  41 & 0.465 & 0.414 & \textbf{0.503} \\
 \bottomrule
 \end{tabular}
-\caption{Where the gain lives, AUPRC of the two ensembles. Taxa are counted as distinct mentions
-found by a biodiversity NER model (\texttt{en\_ner\_eco\_biobert}) in the passage. \textsc{Test299}
+\caption{Where the gain lives, AUPRC of the three ensembles. Taxa are counted as distinct mentions
+found in the passage by TaxoNERD \citep{leguillarme2022taxonerd} (\texttt{en\_ner\_eco\_biobert}); an
+argument ``is not a taxon'' when TaxoNERD does not recognise it in the passage. \textsc{Test299}
 passages name $5.1$ taxa on average, \textsc{Biotx100} $2.6$ and \textsc{Reject50} $1.7$.}
 \label{tab:where}
 \end{table}
 
-\subsection{Conditioning on the triple}
+\subsection{Conditioning on the pair}
 \label{sec:res-main}
-Table~\ref{tab:main} gives the comparison. Conditioning on the candidate triple raises per-seed
-AUPRC from $0.851 \pm 0.006$ to $0.910 \pm 0.006$ and, at block-held-out thresholds, F1 from
-$0.775$ to $0.860$ --- precision and recall both. On decision correctness the verifier fixes 76
-items and breaks 30, McNemar $p = 1.2\times10^{-5}$. The advantage is not an artefact of where we
-chose to cut: the verifier dominates the baseline at every threshold
-(Figure~\ref{fig:threshold}), and at $\tau = 0.25$, for example, holds precision $0.899$ at
-recall $0.793$ where the baseline holds $0.837$ at $0.687$.
+Table~\ref{tab:main} gives the comparison. Telling the model which pair a candidate is about raises
+per-seed AUPRC from $0.851 \pm 0.006$ to $0.919 \pm 0.005$ and, at block-held-out thresholds, F1
+from $0.775$ to $0.871$, precision and recall both. On decision correctness the pair-conditioned
+model fixes 75 items and breaks 22, McNemar $p = 1.3\times10^{-7}$. The advantage does not depend on
+where we cut: it is ahead at every one of 99 thresholds, by at least $0.058$ F1
+(Figure~\ref{fig:threshold}).
 
-Table~\ref{tab:where} locates the gain, and it is the most direct test of the paper's argument.
-Split by how many distinct taxa a passage names, the two formulations are indistinguishable when it
-names two or fewer --- AUPRC $0.876$ against $0.874$ --- because then there is only one pair the passage
-could be about, and asking whether it describes an interaction is asking the right question. When it
-names three or more, conditioning on the triple is worth $+0.095$. The blocks follow the same
-pattern for the same reason: \textsc{Test299}, whose passages name $5.1$ taxa on average, gains
-$0.106$, while \textsc{Biotx100}, at $2.6$ and every row the top-ranked candidate of its passage,
-gains nothing.
+Adding the relation term to the query does not add to this. The triple-conditioned model is also far
+ahead of the sentence-level one ($p = 6.8\times10^{-5}$), but against the pair-conditioned model it
+fixes 20 items and breaks 31 ($p = 0.16$), and its AUPRC is, if anything, lower. What the decision
+needs is the pair. The one place the relation term earns its keep is at strict operating points:
+at $\tau = 0.5$ both reach precision $0.913$, the triple model at recall $0.768$ and the pair model
+at $0.683$ (Table~\ref{tab:curve}).
+
+Table~\ref{tab:where} locates the gain, and it is the most direct test of the argument. On passages
+that name three or more taxa, the pair query is worth $+0.084$ AUPRC. On passages naming two or
+fewer it is worth less, $+0.042$, and the split below shows why it is worth anything there at all:
+the candidates come from automatic matching, and in 41\% of them one ``taxon'' is a string TaxoNERD
+does not recognise as an organism in the passage --- an organ, an author's name, a vernacular term.
+Where both arguments are recognised taxa and the passage names no third one, the case in which the
+sentence-level question and the pair question coincide, the pair query adds $+0.026$ on 33 items;
+where an argument is not a taxon it adds $+0.052$, and $+0.180$ when the passage also names others.
+The pair query does two things, then: it tells the model which of several pairs to judge, and it
+lets the model check that what it is judging is a pair of organisms. BioRED, whose entities are
+gold-annotated, isolates the first.
+
+\subsection{A public benchmark: BioRED}
+\label{sec:biored}
+
+\begin{table}[t]\centering\small
+\setlength{\tabcolsep}{3.4pt}
+\begin{tabular}{lccccc}
+\toprule
+ & & & & \multicolumn{2}{c}{AUPRC, sentences naming} \\
+\cmidrule(lr){5-6}
+Model & AUPRC & P & F1 & 2 concepts & $\ge 3$ \\
+\midrule
+Sentence-level  & $0.783_{\pm .007}$ & 0.608 & 0.725 & \textbf{0.969} & 0.768 \\
+Pair-conditioned & $\mathbf{0.876}_{\pm .006}$ & \textbf{0.748} & \textbf{0.834} & 0.961 & \textbf{0.874} \\
+\bottomrule
+\end{tabular}
+\caption{BioRED test, 3{,}277 sentence-level candidates from 100 abstracts, $0.451$ positive; 169
+come from sentences naming two concepts and 3{,}108 from sentences naming three or more. AUPRC is
+the per-seed mean $\pm$ standard deviation over three seeds; P and F1 are at the pre-specified
+threshold (mean of the checkpoints' development thresholds). The pair-conditioned model fixes 548
+items and breaks 95 (McNemar $p = 4.5\times10^{-71}$).}
+\label{tab:biored}
+\end{table}
+
+The biodiversity benchmark is ours, singly annotated, and modest in size. To test the claim where
+anyone can check it, we rebuild the same setting on BioRED \citep{luo2022biored}, a public corpus of
+600 PubMed abstracts with expert-annotated entities and relations. Candidates are generated exactly
+as the biodiversity pipeline generates them, by co-occurrence: every pair of distinct annotated
+concepts co-mentioned in one sentence, restricted to the eight entity-type pairs that carry
+relations in the training split, with the sentence as passage. A candidate is positive when BioRED
+annotates a relation between the two concepts. BioRED's relations are document-level, so a pair
+co-mentioned in a sentence that does not itself state the relation still counts as positive; the
+labels carry that noise, identically for both models. The 400 training abstracts give 11{,}798
+candidates and the 100 test abstracts 3{,}277. BioRED has no retrieved relation term, so the
+comparison is between the sentence-level model and the pair-conditioned one, trained with the recipe
+of \S\ref{sec:verifier} on BioRED's own gold labels.
+
+The result (Table~\ref{tab:biored}) reproduces the biodiversity one in both its parts. Conditioning
+on the pair raises AUPRC from $0.783$ to $0.876$ and F1 from $0.725$ to $0.834$, fixing 548
+candidates and breaking 95. And the gain sits in the same place: on the 169 candidates from
+sentences that name only two concepts the two models are indistinguishable ($0.969$ against $0.961$;
+per seed $0.962$--$0.965$ against $0.954$--$0.959$), while on the 3{,}108 from sentences naming three
+or more conditioning is worth $+0.106$. Ninety-five per cent of BioRED's co-occurrence candidates
+come from such sentences, which is why the sentence-level formulation fails there.
 
 \subsection{The query, not the encoder}
 \label{sec:res-ablation}
@@ -232,85 +334,85 @@ gains nothing.
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{lcccc}
 \toprule
-Query given to the verifier & P & R & F1 & AUPRC \\
+Query given to the triple model & P & R & F1 & AUPRC \\
 \midrule
-Retrieved triple               & 0.842 & 0.890 & \textbf{0.866} & \textbf{0.912} \\
-Generic relation, pair kept    & 0.876 & 0.687 & 0.770 & 0.874 \\
-Relation shuffled across items & 0.879 & 0.679 & 0.766 & 0.897 \\
-Relation only, no taxa         & 0.917 & 0.045 & 0.085 & 0.677 \\
-Empty query                    & 0.653 & 0.191 & 0.296 & 0.641 \\
+Retrieved triple               & 0.820 & 0.886 & \textbf{0.852} & \textbf{0.909} \\
+Generic relation, pair kept    & 0.897 & 0.671 & 0.767 & 0.888 \\
+Relation shuffled across items & 0.881 & 0.720 & 0.792 & 0.904 \\
+Relation only, no taxa         & 0.833 & 0.020 & 0.040 & 0.677 \\
+Empty query                    & 1.000 & 0.037 & 0.071 & 0.641 \\
 \bottomrule
 \end{tabular}
-\caption{Degrading segment~A of the trained verifier at inference, weights and threshold
-($\tau = 0.04$) unchanged. Base rate $0.563$. Per-seed standard deviations on AUPRC are $\le 0.027$.}
+\caption{Degrading segment~A of the trained triple-conditioned model at inference, weights and its
+own block-held-out thresholds unchanged. Base rate $0.563$. Per-seed standard deviations on AUPRC
+are $\le 0.027$.}
 \label{tab:ablation}
 \end{table}
 
-A model that reads the triple could in principle be winning on something other than the triple.
-Degrading the query at inference, with weights and threshold unchanged, shows it is not
-(Table~\ref{tab:ablation}). Deleting both taxa collapses ranking from $0.912$ to $0.677$ against a
-base rate of $0.563$, and emptying the query entirely gives $0.641$. Replacing the retrieved
-relation with a generic one, pair kept, costs $0.096$ F1; shuffling the relation across items costs
-$0.100$. The decision is carried overwhelmingly by the pair and materially by the relation.
+Degrading the trained triple model's query at inference, with weights and thresholds unchanged,
+tells the same story from the other side (Table~\ref{tab:ablation}). Deleting both taxa collapses
+ranking from $0.909$ to $0.677$ against a base rate of $0.563$, and emptying the query entirely gives
+$0.641$. Replacing or shuffling the relation, pair kept, barely moves ranking ($0.888$, $0.904$): the
+model leans on the pair, which is what the trained pair-only model already showed.
 
 The empty-query arm is \emph{not} the sentence-level baseline: it is a model trained with the query
 and deprived of it, and it does far worse ($0.641$) than a model trained without the query from the
-start ($0.851$). That gap is a warning about a common shortcut. Ablating an input at inference
-measures dependence on it; it does not stand in for training without it.
+start ($0.851$). Ablating an input at inference measures dependence on it; it does not stand in for
+training without it, which is why the comparison of Table~\ref{tab:main} trains all three.
 
-Neither does the gain come from the corpus's pair-contrast design. A verifier trained on the
-20{,}000-row base sample alone, with the same triple-conditioned input, is indistinguishable from
-the full one: per-seed AUPRC $0.9137 \pm 0.0012$ against $0.9099 \pm 0.0060$, block-held-out F1
-$0.857$ against $0.860$. The input formulation is what buys the improvement; the extra supervision
-buys nothing we can measure here.
+Nor does the gain come from the corpus's pair-contrast design. A triple-conditioned model trained on
+the 20{,}000-row base sample alone reaches per-seed AUPRC $0.918 \pm 0.003$, against $0.909 \pm 0.004$
+for the full corpus, and the same block-held-out F1 as the pair model, $0.871$. The input
+formulation is what buys the improvement; the extra supervision buys nothing we can measure here.
 
 \subsection{Recall side}
 \label{sec:recall}
 \textsc{Reject50} asks whether the candidates the retrieval pipeline discarded contain recoverable
-positives. Both models recover 7 of the 9 true positives, so the sentence-level baseline is not
-blind to them; what separates the two is what each lets in alongside. The baseline re-admits 15 of
-the 32 correct rejections to find those 7, F1 $0.452$, and the verifier re-admits 4, F1 $0.700$.
-Nine positives is a small numerator --- the Clopper--Pearson interval on $7/9$ is $[0.40, 0.97]$ ---
-so we read this qualitatively: a curator mining the discarded candidates with the verifier
-reviews 11 candidates of which 4 are wrong, rather than 22 of which 15 are.
+positives, and it is too small to rank the models: nine positives, so one item moves recall by
+eleven points. At block-held-out thresholds the sentence-level model recovers 7 of the 9 by
+re-admitting 15 of the 32 correct rejections (F1 $0.452$), the pair-conditioned model recovers 4
+while re-admitting 7 ($0.400$), and the triple-conditioned model recovers 6 while re-admitting 5
+($0.600$). We read only the qualitative point: the discarded candidates do contain recoverable
+interactions, and a model that reads the candidate finds them at a lower cost in wrong
+re-admissions than one that reads only the passage.
 
 \subsection{An operating curve, not a verdict}
 \label{sec:opoint}
 
 \begin{figure}[t]\centering
 \includegraphics[width=\columnwidth]{fig/fig4_threshold.pdf}
-\caption{Precision, recall and F1 of the verifier against the decision threshold on all 437 rows,
-with the sentence-level baseline's F1 for comparison (same corpus and encoder). The marked threshold
-is block-held-out. The verifier dominates at every $\tau$.}
+\caption{Precision, recall and F1 of the pair-conditioned model against the decision threshold on
+all 437 rows, with the sentence-level model's F1 for comparison (same corpus and encoder). The
+shaded band spans the three block-held-out thresholds. The pair model is ahead at every $\tau$.}
 \label{fig:threshold}
 \end{figure}
 
 \begin{table}[t]\centering\small
-\setlength{\tabcolsep}{3.4pt}
-\begin{tabular}{rcccc|ccc}
+\setlength{\tabcolsep}{2.6pt}
+\begin{tabular}{rccc|ccc|ccc}
 \toprule
- & \multicolumn{4}{c|}{triple-conditioned} & \multicolumn{3}{c}{sentence-level} \\
-$\tau$ & keep & P & R & F1 & P & R & F1 \\
+ & \multicolumn{3}{c|}{sentence} & \multicolumn{3}{c|}{pair} & \multicolumn{3}{c}{triple} \\
+$\tau$ & P & R & F1 & P & R & F1 & P & R & F1 \\
 \midrule
-0.01 & 290 & 0.779 & 0.919 & 0.843 & 0.690 & 0.915 & 0.787 \\
-0.04 & 260 & 0.842 & 0.890 & \textbf{0.866} & 0.763 & 0.813 & \textbf{0.787} \\
-0.10 & 238 & 0.866 & 0.837 & 0.851 & 0.796 & 0.732 & 0.763 \\
-0.25 & 217 & 0.899 & 0.793 & 0.842 & 0.837 & 0.687 & 0.754 \\
-0.50 & 181 & 0.923 & 0.679 & 0.782 & 0.866 & 0.524 & 0.653 \\
-0.90 & 133 & 0.947 & 0.512 & 0.665 & 0.930 & 0.163 & 0.277 \\
+0.01 & .690 & .915 & .787 & .745 & .976 & .845 & .721 & .935 & .814 \\
+0.04 & .763 & .813 & .787 & .795 & .943 & .862 & .790 & .919 & .850 \\
+0.10 & .796 & .732 & .763 & .835 & .907 & .869 & .823 & .907 & .863 \\
+0.25 & .837 & .687 & .754 & .889 & .850 & .869 & .877 & .841 & .859 \\
+0.50 & .866 & .524 & .653 & .913 & .683 & .781 & .913 & .768 & .834 \\
+0.90 & .930 & .163 & .277 & .963 & .423 & .588 & .945 & .626 & .753 \\
 \bottomrule
 \end{tabular}
-\caption{Both models' operating curves on all 437 rows, three-checkpoint ensembles. Rows are shown
-to make the shape visible; the reported operating points are those of Table~\ref{tab:main}.}
+\caption{The three models' operating curves on all 437 rows, three-checkpoint ensembles. Rows show
+the shape; the reported operating points are those of Table~\ref{tab:main}.}
 \label{tab:curve}
 \end{table}
 
-The verifier's precision moves from $0.779$ to $0.947$ as $\tau$ moves (Table~\ref{tab:curve}), and
-the right point on that curve is not a property of the model. Ingestion into a reference database
-pays for false positives and belongs at the high end; assembling candidates for expert review pays
-for false negatives and belongs at the low end. A filter that emits a verdict fixes that choice at
-training time, for users who were never asked. A calibrated score with an adjustable threshold
-leaves it to them \citep{geifman2017selective}.
+The pair model's precision moves from $0.745$ to $0.963$ as $\tau$ moves (Table~\ref{tab:curve}),
+and the right point on that curve is not a property of the model. Ingestion into a reference
+database pays for false positives and belongs at the high end; assembling candidates for expert
+review pays for false negatives and belongs at the low end. A filter that emits a verdict fixes that
+choice at training time, for users who were never asked. A calibrated score with an adjustable
+threshold leaves it to them \citep{geifman2017selective}.
 
 \section{What the remaining errors are made of}
 \label{sec:decomp}
@@ -331,37 +433,41 @@ Negation & (wheat, hosts, \emph{F.\ acuminatum}) &
 ``\ldots\ \emph{F.\ acuminatum} in New Zealand was found only on \textbf{non-wheat hosts}.'' \\[1pt]
 Same organism & (Chinese knotweed, pollinators, \emph{P.\ chinensis}) &
 ``\ldots\ potential pollinators of \textbf{Chinese knotweed (\emph{Persicaria chinensis})}.'' \\[1pt]
-Entity & (\textbf{equine}, infections, human) &
-``\ldots\ evidence for \textbf{equine} \emph{influenza virus} infections in human beings.'' \\
+Entity & (\textbf{Siberia}, migrating, birds) &
+``\ldots\ a portion of birds \textbf{migrating} from \textbf{Siberia} have common winter nesting
+areas.'' \\
 \bottomrule
 \end{tabular}
-\caption{One example of each mechanism among the verifier's false positives. The relation's true
-argument is italicised where it is not the queried taxon; in the entity case an adjective inside a
-pathogen's name was matched as the host.}
+\caption{One example of each mechanism among the pair-conditioned model's false positives. The
+relation's true argument is italicised where it is not the queried taxon; in the entity case a
+place name was matched as a taxon.}
 \label{tab:examples}
 \end{table*}
 
-The verifier's 47 false positives at its block-held-out operating point are not homogeneous. Read by
-hand, they sort into a small number of mechanisms (Table~\ref{tab:examples}): \emph{pair-binding},
+The pair-conditioned model's 39 false positives at its block-held-out operating point are not
+homogeneous: 27 come from passages naming three or more taxa, and 17 have an argument TaxoNERD does
+not recognise as a taxon. Read by hand, they sort into a small number of mechanisms
+(Table~\ref{tab:examples}; the per-row table is released): \emph{pair-binding},
 where both taxa and the relation are correct but the relation's argument is a third organism;
 \emph{co-listing}, where the two taxa are members of one enumeration and interact with neither each
 other nor anything in particular; \emph{negation}, where the passage asserts the opposite;
 \emph{same organism}, where the two ``taxa'' are one organism named twice or an organism and its own
 clade; candidates whose relation term names no biotic interaction at all (\emph{relative to},
 \emph{hybridization}, \emph{migration}); and \emph{entity} failures, where a taxon string is a
-taxonomic author, an organ, or an adjective inside a pathogen's name (``\emph{equine} influenza
-virus''). A further handful read as gold errors and are discussed in the Limitations.
+taxonomic author, a place, an organ, or an adjective inside a pathogen's name (``\emph{equine}
+influenza virus'', which the pair-conditioned model already rejects). A further handful read as gold errors and are discussed in the Limitations.
 
 \paragraph{A bound on component-wise verification.}
 The pair-binding class has a structural property worth stating, because it rules out the obvious
 alternative architecture. Its members have both taxa correctly resolved \emph{and} the correct
 relation; what is wrong is a binding that exists only in retrieval's combinatorics. A verifier that
-checks $s_1$, $r$ and $s_2$ separately --- however good each check is --- cannot see it. On the
-\textsc{Biotx100} candidates, where triple-level grades make the classes countable, 16 of the 35
-unsupported candidates are pair-binding failures (the rest: 10 entity, 9 predicate). A
-component-wise verifier accepting a fraction $r$ of the 65 supported triples therefore also accepts
-all 16, so its precision is at most $65r/(65r+16)$: $0.802$ at full recall. Only a decision that
-reads the pair \emph{in context} can go above it.
+checks $s_1$, $r$ and $s_2$ separately --- however good each check is --- cannot see it. On the 97
+clean \textsc{Biotx100} candidates, where triple-level grades make the classes countable, 15 of the
+32 unsupported candidates are pair-binding failures (the rest: 9 entity, 8 predicate), a share of
+$0.47$, Clopper--Pearson $[0.29, 0.65]$. A component-wise verifier accepting a fraction $r$ of the 65
+supported triples therefore also accepts all 15, so its precision is at most $65r/(65r+15)$:
+$0.81$ at full recall, $[0.76, 0.88]$ across that interval. Only a decision that reads the pair
+\emph{in context} can go above it.
 
 \section{Candidate rules}
 \label{sec:rules}
@@ -372,14 +478,18 @@ reads the pair \emph{in context} can go above it.
 \toprule
 System & P & R & F1 & fixed & broken \\
 \midrule
-Verifier                  & 0.825 & 0.898 & 0.860 & --- & --- \\
-\quad + 7 rules           & 0.859 & 0.890 & 0.874 & 11 & 2 \\
-\quad + 8 rules           & \textbf{0.878} & 0.878 & \textbf{0.878} & 17 & 5 \\
+Pair-conditioned          & 0.849 & 0.894 & 0.871 & --- & --- \\
+\quad + 7 rules           & 0.858 & 0.886 & \textbf{0.872} & 3 & 2 \\
+\quad + 8 rules           & \textbf{0.867} & 0.874 & 0.870 & 6 & 5 \\
+\midrule
+Triple-conditioned        & 0.820 & 0.886 & 0.852 & --- & --- \\
+\quad + 7 rules           & 0.840 & 0.878 & 0.859 & 7 & 2 \\
+\quad + 8 rules           & 0.862 & 0.866 & 0.864 & 14 & 5 \\
 \bottomrule
 \end{tabular}
-\caption{Deterministic candidate rules applied before the verifier's decision, all 437 rows,
-block-held-out thresholds. ``Fixed'' and ``broken'' are relative to the verifier alone; McNemar
-$p = 0.027$ (7 rules) and $0.019$ (8). Both rule sets improve every block.}
+\caption{Deterministic candidate rules applied before the model's decision, all 437 rows,
+block-held-out thresholds. ``Fixed'' and ``broken'' are relative to the same model without rules.
+McNemar: $p = 1.00$ and $1.00$ on the pair model, $0.18$ and $0.067$ on the triple model.}
 \label{tab:rules}
 \end{table}
 
@@ -410,28 +520,65 @@ final rules reject teacher-negatives at $0.88$ to $1.00$ (\emph{co\_listed}, whi
 parse, on a fixed 6{,}000-row sample). The rules were then frozen, recorded by hash, and evaluated
 once.
 
-The result is in Table~\ref{tab:rules}: precision rises from $0.825$ to $0.878$ at a recall cost of
-$0.020$, 17 items fixed and 5 broken, McNemar $p = 0.019$. We report it as an upper estimate, since
-half the rules were chosen with these errors in view; what the training-data criterion establishes
-is that they reject what they are meant to reject on 42k rows they were not chosen on, not that
-their effect here would replicate exactly on new data. The three rules written before this error
-analysis, from an earlier one, remove one false positive and one true positive here, which is the
-honest measure of what rules carry over without being looked for.
+The result (Table~\ref{tab:rules}) is smaller than the motivation suggested, and the reason is the
+headline of this paper. On the pair-conditioned model the rules buy $0.009$ to $0.018$ precision for
+$0.008$ to $0.020$ recall, F1 unchanged, and none of it is distinguishable from no effect: of its 39
+false positives the eight rules catch 6. A model told which pair it is judging already rejects most
+of what the rules were written to reject --- a non-organism argument, a co-listed pair --- because it
+can read the candidate. On the triple-conditioned model, which leans on its relation term, the rules
+do more: precision $0.820 \to 0.862$ with 14 items fixed and 5 broken ($p = 0.067$). We report these
+as upper estimates in any case, since half the rules were chosen with this benchmark's errors in
+view; what the training-data criterion establishes is that they reject what they are meant to reject
+on 42k rows they were not chosen on, not that their effect here would replicate exactly. Their case
+in deployment is transparency rather than accuracy: each rejection names the rule that made it, and
+a curator can audit a rule where they cannot audit a weight.
 
 \section{The deployed configuration}
 \label{sec:deploy}
 
-In the pipeline the verifier runs as one 110M-parameter model with two heads: the
-triple-conditioned verification head described here, and a direction head that decides which taxon
-is the subject, trained jointly with it and taking the pair in a canonical order so
-that the direction answer cannot change when the pipeline presents the pair the other way round.
-Its interaction threshold, $0.5$, is fixed on its own development split. On the 437 rows it reaches
-AUPRC $0.934$ and precision $0.852$, recall $0.959$, F1 $0.902$; with the candidate rules,
-precision $0.870$, recall $0.951$, F1 $0.909$.\footnote{The \emph{co\_listed} rule is omitted from
-this configuration: on the joint model's accept set it removes one false positive at the cost of
-three true ones.} It needs no GPU: on eight CPU threads it scores $32.7$ candidates per second with
-both heads, after a one-off $7.5$\,s to load, which is faster than the pipeline retrieves them, so
-every candidate is verified rather than a sample.
+\begin{table}[t]\centering\small
+\setlength{\tabcolsep}{3.6pt}
+\begin{tabular}{lrcc}
+\toprule
+Expert direction label & $n$ & answered & correct \\
+\midrule
+forward or reverse     & 84 & 62 (74\%) & 55 of 62 (0.887) \\
+undecidable (``?'')    & 12 & --- & 9 left \textsc{Uncertain} \\
+bidirectional          &  1 & --- & 1 \textsc{Bidirectional} \\
+\bottomrule
+\end{tabular}
+\caption{The deployed model's four-way direction output against 97 expert direction labels.
+``Answered'' counts \textsc{Forward} or \textsc{Reverse}; the rest are \textsc{Uncertain}. The
+abstention level ($0.60$) was chosen by the expert after seeing this set's coverage curve, so the
+figures are optimistic.}
+\label{tab:direction}
+\end{table}
+
+In the pipeline, verification runs as one 110M-parameter model with two heads. It differs from the
+pair-conditioned model of \S\ref{sec:verifier} in three respects, each of which we adopted during
+development: the two taxa are given in alphabetical order, so the input is identical whichever way
+round retrieval presents the pair; they are marked in place in the passage (\texttt{@}\ldots\texttt{@},
+\texttt{\#}\ldots\texttt{\#}) rather than only named in segment~A; and the training labels are the
+teacher's pair-level judgments. Its interaction threshold, $0.5$, was set before evaluation and never
+tuned. On the 437 rows it reaches AUPRC $0.934$, and precision $0.851$, recall $0.955$, F1 $0.900$;
+with the candidate rules, precision $0.869$, recall $0.947$, F1 $0.907$ (6 items fixed, 2 broken,
+$p = 0.29$).\footnote{The \emph{co\_listed} rule is omitted from this configuration: on the deployed
+model's accept set it removes one false positive at the cost of three true ones.} It needs no GPU: on
+eight CPU threads it scores $32.7$ candidates per second with both heads, after a one-off $7.5$\,s to
+load, which is faster than the pipeline retrieves them, so every candidate is verified rather than a
+sample.
+
+The second head reports the interaction's \emph{direction} in four categories. \textsc{Forward} and
+\textsc{Reverse} say which taxon acts on the other; they come from a direction score that is exactly
+antisymmetric in the two marked taxa, and are reported only when it is confident, otherwise the
+answer is \textsc{Uncertain}. \textsc{Bidirectional} is assigned when the relation is mutual by
+definition --- mutualism, symbiosis, competition, co-infection, \emph{interacts with} --- as listed
+in a relation-polarity lexicon derived from the Relation Ontology; for those, neither taxon is the
+subject and the model is not asked. Expert curation of the benchmark scores reversed triples as
+correct (\S\ref{sec:notfixed}), so direction is evaluated on a separate expert annotation of 97
+candidates (Table~\ref{tab:direction}): the model answers 74\% of the 84 with a direction and is right
+on $0.887$ of those, leaves 9 of the 12 the expert could not decide as \textsc{Uncertain}, and labels
+the one bidirectional item \textsc{Bidirectional}.
 
 \section{Where the reformulation stops}
 \label{sec:notfixed}
@@ -447,11 +594,11 @@ validity; and the gate's casualties are viruses, which are legitimate partners i
 \emph{authority} and \emph{same\_organism} rules (\S\ref{sec:rules}) target the disambiguation
 directly and are the better instrument.
 
-\paragraph{Argument order is not evaluable on this gold standard.}
-Expert curation marks reversed triples as correct --- we verified two by hand,
+\paragraph{Direction needs its own gold.}
+Expert curation of the benchmark marks reversed triples as correct --- we verified two by hand,
 (\emph{Breinlia}, host of, \emph{Rattus}) and (\emph{Demidospermus}, parasitized by,
-\emph{A.\ inermis}) --- so no directional number on this benchmark would measure the model rather
-than the convention, and the direction head's evaluation lives on corpora annotated for it. The
+\emph{A.\ inermis}) --- so no directional number on the benchmark would measure the model rather
+than the convention, which is why direction is scored on its own annotation (\S\ref{sec:deploy}). The
 supervision itself is uneven in a revealing way: among the 5{,}591 reversed training rows, the rate
 at which the teacher rejects a reversal is governed by the relation's \emph{surface string}.
 Direction-encoding participles and prepositional forms are rejected at $0.51$--$0.70$
@@ -469,8 +616,8 @@ hypothesis alone in natural language inference
 \citep{gururangan-etal-2018-annotation,poliak-etal-2018-hypothesis} and from the passage alone in
 reading comprehension \citep{kaushik-lipton-2018-much}, and such rules hold in distribution while
 failing under deployment \citep{geirhos-etal-2020-shortcut,du-etal-2024-shortcut}; the closest
-task-level precedent is fact verification, where a claim-only classifier matches evidence-aware
-models because of how the corpus was built \citep{schuster-etal-2019-towards}. Our sentence-level
+task-level precedent is fact verification \citep{thorne2018fever}, where a claim-only classifier
+matches evidence-aware models because of how the corpus was built \citep{schuster-etal-2019-towards}. Our sentence-level
 baseline is a partial-input model in exactly this sense, and the specific feature here is that the
 missing input is the query the pipeline itself issued rather than an annotator artefact
 \citep{wiegand-etal-2019-detection,parmar-etal-2023-dont}. \citet{feng-etal-2019-misleading}
@@ -497,7 +644,10 @@ Casting a relation as a question about a named entity \citep{levy2017zero}, or a
 hypothesis verbalising the relation between two of them \citep{obamuyide2018zero,sainz2021label},
 is the reformulation our input format instantiates, and the resulting decision --- does this passage
 support this specific claim --- has the shape of scientific claim verification
-\citep{wadden2020fact}. Distilling a large model's judgments into a small student is established
+\citep{wadden2020fact}, and of validating a knowledge-graph triple against text
+\citep{lehmann2012defacto}, with the difference that those systems retrieve evidence for a given
+triple while here the passage is fixed by the retrieval that proposed the triple and the question is
+whether that passage, and no other, supports it. Distilling a large model's judgments into a small student is established
 practice \citep{west2022symbolic,gekhman2023trueteacher}. Selective classification thresholds a
 score instead of issuing a verdict \citep{geifman2017selective}, which is how extraction is made
 useful to human abstractors: \citet{swaminathan2024selective} abstain under calibrated thresholds to
@@ -519,43 +669,60 @@ literature-mined biotic-interaction triples against their source passage before 
 \label{sec:conclusion}
 
 When candidates are retrieved by co-occurrence, the sentence-level question is answered before it
-is asked, and a classifier built for it is left with nothing to decide. Asking instead whether the
-passage supports the candidate --- with the same encoder and the same data --- raises AUPRC from
-$0.851$ to $0.910$, and the gain sits exactly where passages name more than one pair. The errors
-that remain are mostly questions about the candidate rather than the passage, and deterministic
-rules answer those better than a classifier does. The result is a calibrated score where a verdict
-stood, cheap enough to run on every candidate.
+is asked, and a classifier built for it is left with little to decide. Telling the model which pair
+the candidate is about --- with the same encoder and the same data --- raises AUPRC from $0.851$ to
+$0.919$ on the biodiversity benchmark and from $0.783$ to $0.876$ on BioRED, and the relation term adds
+nothing on top. The gain sits where the argument puts it: on passages that name more than one
+candidate pair, and, where candidates come from automatic matching, on candidates whose arguments
+are not organisms. The result is a calibrated score where a verdict stood, with a four-way direction
+label beside it, cheap enough to run on every candidate.
 
 \section*{Limitations}
 
 \paragraph{One benchmark, singly annotated.}
-437 rows in three blocks, every label assigned by one domain expert, no item graded twice: we
-report no inter-annotator agreement and cannot bound label noise. Several of the verifier's most
-confident false positives read as gold errors --- a bat tick ``reported \ldots\ to occasionally feed
-on humans'', labelled negative. We have changed none of them: correcting gold after seeing model
-output biases the evaluation toward the model, so they go instead to blind expert review, mixed
-with an equal number of random controls and with model scores hidden. On the recall side the
-denominator is 9 positives.
+437 rows in three blocks, every label assigned by one domain expert, with no independent second
+grading: we report no inter-annotator agreement and cannot bound label noise. Some apparent false
+positives are not model errors in the usual sense. A passage stating that ``the bat tick \ldots\ has
+been reported \ldots\ to occasionally feed on humans'' is labelled negative, correctly, because the
+curator judged the candidate's \emph{resolved} taxon, which retrieval had mapped to the wrong
+species; the model sees only the surface form, which the passage does support. Errors of this kind
+are upstream, and no passage-reading model can repair them. Candidates on which two independent
+models confidently contradict the gold go to blind expert re-annotation, mixed with an equal number
+of random controls and with labels and scores hidden; no label is changed on the strength of a
+model's disagreement. On the recall side the denominator is 9 positives.
+
+\paragraph{Top-ranked candidates only.}
+Every \textsc{Biotx100} row is the top-ranked candidate for its passage, and half are pairs GloBI
+already records. Whether the gains hold further down the retrieval ranking, where candidates are
+noisier, is not measured here; \textsc{Test299} and the public benchmark of \S\ref{sec:biored} are
+not rank-restricted.
 
 \paragraph{The rules are partly fitted by choice.}
 Four of the eight rules were selected after reading this benchmark's false positives
 (\S\ref{sec:rules}). The training-data criterion bounds how much that selection can have memorised
-the benchmark, but it does not remove it, and the rules' $p = 0.019$ should be read as optimistic
-until it is confirmed on candidates neither the rules nor their author have seen. The rules also fire
-on no row of a separate 100-candidate development sample, so that sample can neither confirm nor
-contradict them.
+the benchmark, but it does not remove it, and their effects should be read as optimistic until
+confirmed on candidates neither the rules nor their author have seen. They fire on no row of a
+separate 100-candidate sample, so that sample can neither confirm nor contradict them.
 
 \paragraph{Fresh candidates are harder.}
-On that development sample --- 100 retrieved candidates drawn after the benchmark, half of them
-from passages containing several candidate pairs --- the verifier reaches F1 $0.698$, well below its
-benchmark figure. Its label provenance is not identical to the benchmark's, so we do not read this as a
-measured drop, but it is the clearest sign that multi-pair passages remain the hard case and that the
-benchmark may understate their share of a live pool.
+On that sample --- 100 retrieved candidates drawn after the benchmark, half of them from passages
+containing several candidate pairs --- all three models score well below their benchmark figures,
+though in the same order: AUPRC $0.665$ sentence-level, $0.785$ pair-conditioned, $0.765$
+triple-conditioned. Its label provenance is not identical to the benchmark's, so we do not read the
+drop as measured, but it is the clearest sign that multi-pair passages remain the hard case and that
+the benchmark may understate their share of a live pool.
 
 \paragraph{The diagnosis is triple-level; the evaluation is pair-level.}
 Only \textsc{Biotx100} carries whole-triple gold. Evaluating at the pair level everywhere means a
-candidate with the right pair and a misbound relation counts as correct, so the headline understates
-what triple conditioning buys; triple-level gold on the other two blocks would sharpen it.
+candidate with the right pair and a misbound relation counts as correct, so the comparison cannot
+credit the relation term with the cases it alone could catch; triple-level gold on the other two
+blocks is what would test whether the triple model's advantage at strict operating points is real.
+
+\paragraph{BioRED's labels are document-level.}
+A BioRED candidate is positive when the abstract relates the two concepts anywhere, so a co-mention
+in a sentence that does not state the relation counts as positive. Both models are trained and scored
+on the same noisy labels, so the comparison is controlled, but the absolute figures understate what
+either would reach against sentence-level gold.
 
 \paragraph{Teacher noise and pretraining exposure.}
 The training labels come from a prompted teacher wrong about one time in seven, and the student
@@ -582,24 +749,28 @@ ours, but we have not shown that other pools fail the same way.
 \section{Per-seed results}
 \label{app:seeds}
 
-\begin{table}[h]\centering\small
-\begin{tabular}{lcc|cc}
+\begin{table}[t]\centering\footnotesize
+\setlength{\tabcolsep}{2.2pt}
+\begin{tabular}{lccc|ccc}
 \toprule
- & \multicolumn{2}{c|}{triple-conditioned} & \multicolumn{2}{c}{sentence-level} \\
- & AUPRC & F1 @ 0.5 & AUPRC & F1 @ 0.5 \\
+ & \multicolumn{3}{c|}{AUPRC} & \multicolumn{3}{c}{F1, $\tau = 0.5$} \\
+seed & sent. & pair & triple & sent. & pair & triple \\
 \midrule
-seed 1 & 0.9140 & 0.7832 & 0.8578 & 0.6321 \\
-seed 2 & 0.9030 & 0.8018 & 0.8513 & 0.6976 \\
-seed 3 & 0.9128 & 0.7755 & 0.8449 & 0.6633 \\
+1 & .858 & .922 & .912 & .632 & .790 & .842 \\
+2 & .851 & .921 & .905 & .698 & .758 & .847 \\
+3 & .845 & .912 & .909 & .663 & .788 & .834 \\
 \midrule
-mean $\pm$ sd & $0.9099 \pm 0.0060$ & $0.7868 \pm 0.0136$ & $0.8513 \pm 0.0064$ & $0.6643 \pm 0.0328$ \\
-ensemble & 0.9123 & 0.7822 & --- & --- \\
+mean & .851 & .919 & .909 & .664 & .779 & .841 \\
+sd   & .006 & .005 & .004 & .033 & .018 & .006 \\
 \bottomrule
 \end{tabular}
-\caption{Per-seed figures. The ensemble averages three checkpoints' probabilities and is what the
-body of the paper reports at operating points.}
+\caption{Per-seed figures on the 437 biodiversity rows, order-free scoring. The body reports
+three-checkpoint ensembles at block-held-out thresholds; a fixed $\tau = 0.5$ is shown here because
+the three models are calibrated differently, and a single shared threshold would favour one of them
+arbitrarily.}
 \label{tab:perseed}
 \end{table}
+
 
 \section{Negative results and cost}
 \label{sec:negative}
