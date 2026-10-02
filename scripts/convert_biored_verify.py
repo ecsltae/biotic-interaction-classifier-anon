@@ -19,7 +19,7 @@ plus pmid, type1, type2, n_concepts (distinct concepts in the sentence) and sent
 
 Usage
   python3 scripts/convert_biored_verify.py \
-      --src /home/egaillac/biored_baseline/bioredirect --out data/benchmarks/biored_verify
+      --src data/raw/bioredirect --out data/benchmarks/biored_verify
 """
 from __future__ import annotations
 
@@ -109,7 +109,7 @@ def candidates(docs, type_pairs, nlp) -> pd.DataFrame:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--src", default="/home/egaillac/biored_baseline/bioredirect")
+    ap.add_argument("--src", default="data/raw/bioredirect")
     ap.add_argument("--out", default="data/benchmarks/biored_verify")
     a = ap.parse_args()
     import spacy
