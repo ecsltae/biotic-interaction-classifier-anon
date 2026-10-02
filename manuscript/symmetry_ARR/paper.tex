@@ -543,12 +543,21 @@ figures are means over three seeds; per-seed values are in Appendix~\ref{app:see
 
 \subsection{The applied setting}
 \label{sec:res-applied}
-On the biodiversity verification set the same model raises $\mathrm{F}_1$ from $0.816$ to
-$0.902$ against a deployed sentence-level filter's own recorded decisions (McNemar
-$p = 2.3\times10^{-4}$, $437$ items) at unchanged inference cost. The honest characterisation
-is robustness to prevalence shift rather than raw accuracy: across blocks spanning prevalence
-$0.31$ to $0.85$, one fixed threshold gives an $\mathrm{F}_1$ spread of $0.070$ against the
-filter's $0.169$.
+The construction was built for a literature-mining pipeline that proposes candidate
+(taxon, relation, taxon) triples for a biodiversity interaction database, and it runs there as a
+single 110M-parameter model with two heads: one deciding whether the passage supports the
+candidate, one deciding which taxon is its subject. It needs no GPU: on eight CPU threads it
+scores about $33$ candidate pairs per second (\S\ref{sec:method-cost}), above the rate at which the
+pipeline retrieves candidates, so every candidate can be scored rather than a sampled subset.
+
+Two properties carry over from the benchmarks to that setting. Because the pair is canonicalised
+before encoding, swap consistency holds exactly on every candidate the pipeline emits, whatever
+order it presents the pair in, so no stored edge can be contradicted by its own mirror. And on the $84$ human-annotated direction items the head reaches
+$0.869$, against $0.464$ when the passage is masked and only the two taxon names are shown
+(\S\ref{sec:res-accuracy}), so in deployment it is reading the sentence rather than recalling
+which organisms usually occupy which role. We report the setting as an application of the
+construction, not as further evidence for it: the corpus is small, singly annotated, and its
+skewed prior is precisely why it was the case that exposed the problem.
 
 \section{Discussion and conclusion}
 \label{sec:discussion}
