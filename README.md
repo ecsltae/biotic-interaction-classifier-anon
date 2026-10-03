@@ -47,7 +47,10 @@ python -m spacy download en_core_web_sm
 ```
 
 The LLM rows need [Ollama](https://ollama.com) on `localhost:11434` with the Qwen3 models pulled
-(`ollama pull qwen3:32b`, and the smaller sizes for the scaling table).
+(`ollama pull qwen3:32b`, and the smaller sizes for the scaling table). Use the original Qwen3
+builds: `qwen3:0.6b`, `qwen3:1.7b`, `qwen3:4b-q4_K_M`, `qwen3:8b`, `qwen3:14b`,
+`qwen3:30b-a3b-q4_K_M`, `qwen3:32b`. The default `qwen3:4b` and `qwen3:30b` tags now point to later
+re-releases that ignore `think: false`; `llm_baseline.py` stops if a model does not answer YES/NO.
 
 ## Reproducing the results
 
