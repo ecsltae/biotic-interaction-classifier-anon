@@ -63,7 +63,10 @@ ARMS_BIODIV_SOFT = {"sentence": "models/soft_students/sentence_s{}", "pair": "mo
 ARMS_BIODIV_LINKBERT = {"sentence": "models/linkbert/biodiv_sentence_s{}", "pair": "models/linkbert/biodiv_pair_s{}",
                         "triple": "models/linkbert/biodiv_triple_s{}"}
 ARMS_BIORED_LINKBERT = {"sentence": "models/linkbert/biored_sentence_s{}", "pair": "models/linkbert/biored_pair_s{}"}
-SUFFIXES = ("_large", "_soft", "_linkbert")
+# BioLinkBERT-large (lr 2e-5, 3 epochs, micro-batch 16), same screen. --arms linkbertL: "_linkbertL" keys.
+ARMS_BIODIV_LINKBERTL = {a: p.replace("models/linkbert/", "models/linkbertL/") for a, p in ARMS_BIODIV_LINKBERT.items()}
+ARMS_BIORED_LINKBERTL = {a: p.replace("models/linkbert/", "models/linkbertL/") for a, p in ARMS_BIORED_LINKBERT.items()}
+SUFFIXES = ("_large", "_soft", "_linkbert", "_linkbertL")
 LLM_DIR = REPO / "results/paperA_v2/llm"
 
 
@@ -263,11 +266,12 @@ def llm_rows(bench, y, S, multi=None, blocks=None):
 def main() -> None:
     ap_ = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap_.add_argument("--bench", choices=("biodiv", "biored"), required=True)
-    ap_.add_argument("--arms", choices=("base", "large", "soft", "linkbert"), default="base",
+    ap_.add_argument("--arms", choices=("base", "large", "soft", "linkbert", "linkbertL"), default="base",
                      help="base: the BiomedBERT-base arms (writes the unsuffixed keys); large: the "
                           "BiomedBERT-large arms, merged into the existing JSON under *_large keys; "
                           "soft: the soft-label students (biodiversity only), under *_soft keys; "
-                          "linkbert: the BioLinkBERT-base arms, under *_linkbert keys")
+                          "linkbert / linkbertL: the BioLinkBERT-base / -large arms, under "
+                          "*_linkbert / *_linkbertL keys")
     ap_.add_argument("--llm-only", action="store_true",
                      help="recompute only the LLM rows, from the saved S_*.npy of an earlier full run")
     a = ap_.parse_args()
@@ -292,9 +296,11 @@ def main() -> None:
     if a.arms == "large":
         new = biodiv(dev, ARMS_BIODIV_LARGE, "_large") if a.bench == "biodiv" else biored(dev, ARMS_BIORED_LARGE, "_large")
         res = {**json.loads((OUT / f"tables_{a.bench}.json").read_text()), **new}
-    elif a.arms == "linkbert":
-        new = (biodiv(dev, ARMS_BIODIV_LINKBERT, "_linkbert") if a.bench == "biodiv"
-               else biored(dev, ARMS_BIORED_LINKBERT, "_linkbert"))
+    elif a.arms in ("linkbert", "linkbertL"):
+        sfx = "_" + a.arms
+        new = (biodiv(dev, ARMS_BIODIV_LINKBERTL if a.arms == "linkbertL" else ARMS_BIODIV_LINKBERT, sfx)
+               if a.bench == "biodiv" else
+               biored(dev, ARMS_BIORED_LINKBERTL if a.arms == "linkbertL" else ARMS_BIORED_LINKBERT, sfx))
         res = {**json.loads((OUT / f"tables_{a.bench}.json").read_text()), **new}
     elif a.arms == "soft":
         if a.bench != "biodiv":

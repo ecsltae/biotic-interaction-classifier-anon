@@ -47,7 +47,9 @@ ARMS = {"sentence": ("biored_bc8", "models/biored_bc8/sentence_s{}"),
         "pair_large": ("biored_bc8", "models/large/biored_pair_s{}"),
         # BioLinkBERT-base (lr 2e-5, 3 epochs), chosen on development data by the session-2 screen
         "sentence_linkbert": ("biored_bc8", "models/linkbert/biored_sentence_s{}"),
-        "pair_linkbert": ("biored_bc8", "models/linkbert/biored_pair_s{}")}
+        "pair_linkbert": ("biored_bc8", "models/linkbert/biored_pair_s{}"),
+        "sentence_linkbertL": ("biored_bc8", "models/linkbertL/biored_sentence_s{}"),
+        "pair_linkbertL": ("biored_bc8", "models/linkbertL/biored_pair_s{}")}
 PUBLISHED_BC8_EP = {"PubMedBERT": 74.07, "BioREx": 74.75, "BioREDirect": 75.34,
                     "GPT-4 zero-shot": 42.93, "GPT-3.5 fine-tuned": 70.18, "Llama3.2-11B fine-tuned": 68.78}
 

@@ -108,7 +108,7 @@ python3 paperA/fig/make_threshold_figure.py
 | Threshold figure | `make_threshold_figure.py` (reads `S_biodiv_*.npy`, `tables_biodiv.json` and the benchmark) |
 | Teacher prompts (appendix) | `teacher_label_triples.py`, `llm_baseline.py` |
 | Soft-label distillation (appendix table) | `tables_biodiv.json`: `sentence_soft`, `pair_soft`, `triple_soft`, `mcnemar_soft` (between soft arms), `mcnemar_vs_base_soft` (each soft arm against the verdict-trained arm of the same format) |
-| Encoders appendix (BioLinkBERT-base; encoder paragraph) | `tables_biored.json` and `tables_biodiv.json`: `*_linkbert`, `mcnemar_vs_base_linkbert`; `biored_ep.json`: `sentence_linkbert`, `pair_linkbert` (`paperA_tables.py --bench biored|biodiv --arms linkbert`, `--encoder michiyasunaga/BioLinkBERT-base`) |
+| Encoders appendix (BioLinkBERT-base; encoder paragraph) | `tables_biored.json` and `tables_biodiv.json`: `*_linkbert`, `mcnemar_vs_base_linkbert`; `biored_ep.json`: `sentence_linkbert`, `pair_linkbert` (`paperA_tables.py --bench biored|biodiv --arms linkbert`, `--encoder michiyasunaga/BioLinkBERT-base`); BioLinkBERT-large pair arms: `pair_linkbertL`, `mcnemar_vs_base_linkbertL` (`--arms linkbertL`, `--encoder michiyasunaga/BioLinkBERT-large --micro-batch 16`) |
 | Larger-encoder negative result (encoder paragraph, negative-results appendix) | `tables_biored.json`: `sentence_large`, `pair_large`, `mcnemar_pair_vs_sentence_large`; `biored_ep.json`: same arm names (`paperA_tables.py --bench biored --arms large`) |
 
 The `S_<bench>_<arm>.npy` arrays are the three-checkpoint mean scores, row-aligned with the clean

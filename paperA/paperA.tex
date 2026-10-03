@@ -295,8 +295,8 @@ right question beats the teacher asked the wrong one by $0.13$ AUPRC. As with th
 relation term adds nothing ($0.946$ against $0.943$). Nor is the gap a property of one model size:
 from Qwen3-1.7B to Qwen3.5-122B the pair question leads, by $+0.04$ to $+0.20$ AUPRC on our
 benchmark and $+0.11$ to $+0.32$ on BioRED (Appendix~\ref{app:scaling}). Against its own teacher the
-pair-conditioned student gives up $0.027$ AUPRC, which training on the teacher's probabilities
-instead of its verdicts does not recover (Appendix~\ref{app:soft}), and nothing in F1 at
+pair-conditioned student gives up $0.027$ AUPRC, which distilling the teacher's probabilities does
+not recover (Appendix~\ref{app:soft}), and nothing in F1 at
 block-held-out thresholds ($0.871$ against $0.870$), at 33 candidates per second on a CPU.
 
 Table~\ref{tab:where} locates the gain, and it is the most direct test of the argument. On passages
@@ -411,14 +411,15 @@ Nor does the gain come from the corpus's pair-contrast design: a triple-conditio
 the 20{,}000-row base sample alone reaches AUPRC $0.918 \pm 0.003$ (full corpus $0.909 \pm 0.004$)
 and the pair model's block-held-out F1, $0.871$.
 
-Nor from the encoder. Besides the recipe of \S\ref{sec:verifier} we tried six others on
+Nor from the encoder. Besides the recipe of \S\ref{sec:verifier} we tried seven others on
 development data only: five epochs at learning rates $1$, $2$ and $3\times10^{-5}$, BiomedBERT-large
-(335M parameters) at $1$ and $2\times10^{-5}$, and BioLinkBERT-base \citep{yasunaga2022linkbert}.
-The two ahead of it by $0.01$ or more on both development splits were scored once on the test
-sets (Appendix~\ref{app:encoders}). BiomedBERT-large moves neither BioRED model. BioLinkBERT lifts the
-BioRED pair model to AUPRC $0.855$ and EP F1 $67.9$, but not ours ($0.921$; F1 $0.861$ against
-$0.871$), where it helps the sentence-level model instead; we keep the base recipe. Under each
-encoder the pair query wins, by $+0.103$ to $+0.113$ AUPRC on BioRED and $+0.052$ to $+0.067$ on ours.
+at $1$ and $2\times10^{-5}$, and BioLinkBERT-base and -large \citep{yasunaga2022linkbert}. The three
+ahead of it by $0.01$ or more on both development splits were scored once on test
+(Appendix~\ref{app:encoders}). None pays on both, so we keep the base recipe: BiomedBERT-large moves
+neither BioRED model, BioLinkBERT-base lifts the BioRED pair model (AUPRC $0.855$, EP F1 $67.9$) but
+not ours (F1 $0.861$ against $0.871$), and BioLinkBERT-large lifts both a little, neither
+significantly. With every encoder trained in both formulations the pair query wins: $+0.103$ to
+$+0.113$ AUPRC on BioRED, $+0.052$ to $+0.067$ on ours.
 
 \subsection{An operating curve, not a verdict}
 \label{sec:opoint}
@@ -773,32 +774,43 @@ Encoder & sent. & pair & EP F1 & sent. & pair & triple & pair F1 \\
 \midrule
 BiomedBERT-base  & 0.738 & 0.843 & 57.5/67.1 & 0.851 & 0.918 & 0.909 & 0.871 \\
 BiomedBERT-large & 0.741 & 0.843 & 57.6/67.4 & --- & --- & --- & --- \\
-BioLinkBERT-base & 0.743 & \textbf{0.855} & \textbf{57.9/67.9} & \textbf{0.869} & \textbf{0.921} & \textbf{0.922} & 0.861 \\
+BioLinkBERT-base & \textbf{0.743} & \textbf{0.855} & \textbf{57.9}/67.9 & \textbf{0.869} & 0.921 & \textbf{0.922} & 0.861 \\
+BioLinkBERT-large & --- & 0.848 & ---/\textbf{68.2} & --- & \textbf{0.927} & --- & \textbf{0.885} \\
 \bottomrule
 \end{tabular}
 \caption{The arms under the encoders that were scored on test, recipe otherwise that of
 \S\ref{sec:verifier}: AUPRC (per-seed means, three seeds), EP F1 (sentence-level/pair-conditioned)
-and block-held-out F1. BiomedBERT-large was not trained on all biodiversity arms
-(Appendix~\ref{sec:negative}). Against the base encoder's model of the same format, BioLinkBERT's
+and block-held-out F1. The large encoders were not trained on every arm (Appendix~\ref{sec:negative}
+and below). Against the base encoder's model of the same format, BioLinkBERT's
 pair model fixes 621 BioRED items and breaks 537 (McNemar $p = 0.015$) and on ours 20 and 26
 ($p = 0.46$); its sentence-level model on ours, 43 and 19 ($p = 0.003$).}
 \label{tab:encoders}
 \end{table}
 
-Two of the six alternative recipes of \S\ref{sec:res-ablation} beat the base recipe by $0.01$
-development AUPRC or more on both splits (seed 1, pair model) and were scored once on the test sets: BiomedBERT-large at $2\times10^{-5}$
-(Appendix~\ref{sec:negative}) and BioLinkBERT-base, pretrained on PubMed with citation links
-\citep{yasunaga2022linkbert}, under the base recipe (development AUPRC of the BioRED pair model
-$0.910$ over three seeds, against $0.892$ for the base encoder and $0.905$ for the large one;
-biodiversity pair model $0.852$ on seed 1, then $0.843$ and $0.833$ on seeds 2 and 3).
-BioLinkBERT's BioRED pair model gains on every seed (AUPRC $0.853$--$0.858$ against
-$0.840$--$0.847$; EP F1 $67.7$--$68.0$ against $66.8$--$67.5$), the best sentence-scope result we
-have on BioRED (Table~\ref{tab:encoders}). On our benchmark its pair model does not gain ($0.921 \pm
+Three of the seven alternative recipes of \S\ref{sec:res-ablation} beat the base recipe by $0.01$
+development AUPRC or more on both splits (seed 1, pair model) and were scored once on the test sets:
+BiomedBERT-large at $2\times10^{-5}$ (Appendix~\ref{sec:negative}), and BioLinkBERT, pretrained on
+PubMed with citation links \citep{yasunaga2022linkbert}, in its base size under the base recipe and
+in its large size (below). BioLinkBERT-base's development AUPRC is $0.910$ for the BioRED pair model
+over three seeds, against $0.892$ for the base encoder and $0.905$ for BiomedBERT-large, and $0.852$
+for the biodiversity pair model on seed 1, then $0.843$ and $0.833$ on seeds 2 and 3. Its BioRED
+pair model gains on every seed (AUPRC $0.853$--$0.858$ against $0.840$--$0.847$; EP F1
+$67.7$--$68.0$ against $66.8$--$67.5$), the best sentence-scope AUPRC we have on BioRED
+(Table~\ref{tab:encoders}). On our benchmark its pair model does not gain ($0.921 \pm
 0.005$ against $0.918 \pm 0.005$; F1 $0.861$ against $0.871$) while its sentence-level model does
 ($0.869$, F1 $0.803$ against $0.775$), so the formulation gap narrows to $+0.052$ AUPRC (54 items
 fixed, 31 broken, $p = 0.017$), still concentrated on passages naming three or more taxa ($+0.070$
-against $+0.019$). On BioRED it widens, to $+0.113$. Since the change does not carry to the
-pair-conditioned model the pipeline runs, we keep the base encoder.
+against $+0.019$). On BioRED it widens, to $+0.113$.
+
+BioLinkBERT-large, at $2\times10^{-5}$ for three epochs like BiomedBERT-large, passed the same screen
+(development AUPRC $0.907$ on BioRED and $0.869$ on ours, seed 1; three-seed means $0.903$ and
+$0.862$). Its pair models gain a little on both benchmarks: on BioRED, AUPRC $0.848 \pm 0.009$ and EP
+F1 $68.2 \pm 0.7$ (seeds $67.7$--$69.0$, each above every base seed); on ours, $0.927 \pm 0.004$ and
+F1 $0.885$. Neither gain is significant: against the base encoder's pair model it fixes 652 BioRED
+items and breaks 653 ($p = 1.0$), and on ours 27 and 21 ($p = 0.47$). Its sentence-level and
+triple-conditioned arms were not trained, so it does not enter the comparison. We keep the base
+encoder: BioLinkBERT-base does not carry to the pair-conditioned model the pipeline runs, and
+BioLinkBERT-large's gains are not significant on either benchmark.
 
 
 \section{Recall side}
@@ -941,7 +953,8 @@ Qwen3 models, and it is largest for the 122B model: $+0.195$ on ours and $+0.321
 subsample, where the 32B model's is $+0.270$. Asked about the pair, the 122B model ranks our
 benchmark better than any trained model ($0.968$; the pair-conditioned student $0.918$), which
 suggests that the headroom left on it lies in a stronger teacher rather than in a different student
-recipe (Appendix~\ref{app:soft}); asked the sentence-level question, it scores $0.773$.
+recipe (Appendices~\ref{app:soft} and~\ref{app:encoders}); asked the sentence-level question, it
+scores $0.773$.
 
 \section{Error examples}
 \label{app:examples}
@@ -1079,8 +1092,8 @@ authority classes, and in a second variant for co-listing --- and retrained. The
 AUPRC unchanged within seed noise and the second cost $0.037$. Mechanisms that are properties of the
 candidate are better answered by a rule than taught to a classifier. Deltas in the first four rows
 were measured under an earlier version of the evaluation and are given as directions. The last row
-is one of the two recipes of \S\ref{sec:res-ablation} that passed the development screen (the other
-is in Appendix~\ref{app:encoders}): BiomedBERT-large
+is one of the three recipes of \S\ref{sec:res-ablation} that passed the development screen (the
+others are in Appendix~\ref{app:encoders}): BiomedBERT-large
 raises the BioRED pair model's development AUPRC from $0.892$ to $0.905$ (three-seed means), but on
 the BC8 test set the pair model scores $0.843 \pm 0.005$ against $0.843 \pm 0.004$, F1 $0.814$
 against $0.817$, EP F1 $67.4 \pm 0.4$ against $67.1 \pm 0.3$, and the sentence-level model $0.741$
@@ -1088,7 +1101,7 @@ against $0.738$; the pair query's gain is unchanged ($+0.103$ against $+0.105$ A
 trained on all biodiversity arms, since its BioRED test result could not change the choice.
 For the whole-abstract BioRED model of \S\ref{sec:biored} we also tried, on development data only
 (seed 1), eight epochs instead of three, alone and with each concept's BioRED type in the query:
-development AUPRC $0.787$ and $0.791$ against $0.786$, inside the spread of the three-epoch seeds ($0.765$--$0.786$), so neither
-was trained further or scored on the test set.
+development AUPRC $0.787$ and $0.791$ against $0.786$, inside the spread of the three-epoch seeds
+($0.765$--$0.786$), so neither was trained further or scored on the test set.
 
 \end{document}
