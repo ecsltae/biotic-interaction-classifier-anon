@@ -404,21 +404,21 @@ ranking from $0.909$ to $0.677$ against a base rate of $0.563$, and emptying the
 $0.641$. Replacing or shuffling the relation, pair kept, barely moves ranking ($0.888$, $0.904$): the
 model leans on the pair, which is what the trained pair-only model already showed.
 
-The empty-query arm is \emph{not} the sentence-level baseline: trained with the query and deprived
-of it, it does far worse ($0.641$) than a model trained without it ($0.851$). Ablation at inference
-measures dependence on an input, not what training without it gives; hence three trained arms.
+The empty-query arm is \emph{not} the sentence-level baseline: deprived of the query it was trained
+with, it does far worse ($0.641$) than a model trained without one ($0.851$); hence three trained arms.
 
 Nor does the gain come from the corpus's pair-contrast design: a triple-conditioned model trained on
 the 20{,}000-row base sample alone reaches AUPRC $0.918 \pm 0.003$ (full corpus $0.909 \pm 0.004$)
 and the pair model's block-held-out F1, $0.871$.
 
-Nor from the encoder's size. Besides the recipe of \S\ref{sec:verifier} we tried five other recipes
-on development data only: five epochs at learning rates $1$, $2$ and $3\times10^{-5}$, and
-BiomedBERT-large (335M parameters) at $1$ and $2\times10^{-5}$. The large encoder at
-$2\times10^{-5}$ was best on both development splits ($+0.019$ AUPRC for the BioRED pair model,
-$+0.028$ for the biodiversity one, seed 1). Scored once on the BC8 test set, it moves neither model
-(sentence-level $0.741$, pair-conditioned $0.843$; EP F1 $57.6$ and $67.4$), so we keep the base
-recipe (Appendix~\ref{sec:negative}).
+Nor from the encoder. Besides the recipe of \S\ref{sec:verifier} we tried six others on
+development data only: five epochs at learning rates $1$, $2$ and $3\times10^{-5}$, BiomedBERT-large
+(335M parameters) at $1$ and $2\times10^{-5}$, and BioLinkBERT-base \citep{yasunaga2022linkbert}.
+The two ahead of it by $0.01$ or more on both development splits were scored once on the test
+sets (Appendix~\ref{app:encoders}). BiomedBERT-large moves neither BioRED model. BioLinkBERT lifts the
+BioRED pair model to AUPRC $0.855$ and EP F1 $67.9$, but not ours ($0.921$; F1 $0.861$ against
+$0.871$), where it helps the sentence-level model instead; we keep the base recipe. Under each
+encoder the pair query wins, by $+0.103$ to $+0.113$ AUPRC on BioRED and $+0.052$ to $+0.067$ on ours.
 
 \subsection{An operating curve, not a verdict}
 \label{sec:opoint}
@@ -760,6 +760,46 @@ by $+0.077$ on passages naming three or more taxa and $+0.039$ on the rest. Nor 
 close the pair model's distance to its teacher's $0.946$ ($0.026$ AUPRC, against $0.027$ with
 verdicts). The body keeps the verdict-trained models, on which every other analysis was run.
 
+\section{Encoders}
+\label{app:encoders}
+
+\begin{table}[t]\centering\footnotesize
+\setlength{\tabcolsep}{2.2pt}
+\begin{tabular}{lccccccc}
+\toprule
+ & \multicolumn{3}{c}{BioRED, BC8 test} & \multicolumn{4}{c}{Biodiversity, 437} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-8}
+Encoder & sent. & pair & EP F1 & sent. & pair & triple & pair F1 \\
+\midrule
+BiomedBERT-base  & 0.738 & 0.843 & 57.5/67.1 & 0.851 & 0.918 & 0.909 & 0.871 \\
+BiomedBERT-large & 0.741 & 0.843 & 57.6/67.4 & --- & --- & --- & --- \\
+BioLinkBERT-base & 0.743 & \textbf{0.855} & \textbf{57.9/67.9} & \textbf{0.869} & \textbf{0.921} & \textbf{0.922} & 0.861 \\
+\bottomrule
+\end{tabular}
+\caption{The arms under the encoders that were scored on test, recipe otherwise that of
+\S\ref{sec:verifier}: AUPRC (per-seed means, three seeds), EP F1 (sentence-level/pair-conditioned)
+and block-held-out F1. BiomedBERT-large was not trained on all biodiversity arms
+(Appendix~\ref{sec:negative}). Against the base encoder's model of the same format, BioLinkBERT's
+pair model fixes 621 BioRED items and breaks 537 (McNemar $p = 0.015$) and on ours 20 and 26
+($p = 0.46$); its sentence-level model on ours, 43 and 19 ($p = 0.003$).}
+\label{tab:encoders}
+\end{table}
+
+Two of the six alternative recipes of \S\ref{sec:res-ablation} beat the base recipe by $0.01$
+development AUPRC or more on both splits (seed 1, pair model) and were scored once on the test sets: BiomedBERT-large at $2\times10^{-5}$
+(Appendix~\ref{sec:negative}) and BioLinkBERT-base, pretrained on PubMed with citation links
+\citep{yasunaga2022linkbert}, under the base recipe (development AUPRC of the BioRED pair model
+$0.910$ over three seeds, against $0.892$ for the base encoder and $0.905$ for the large one;
+biodiversity pair model $0.852$ on seed 1, then $0.843$ and $0.833$ on seeds 2 and 3).
+BioLinkBERT's BioRED pair model gains on every seed (AUPRC $0.853$--$0.858$ against
+$0.840$--$0.847$; EP F1 $67.7$--$68.0$ against $66.8$--$67.5$), the best sentence-scope result we
+have on BioRED (Table~\ref{tab:encoders}). On our benchmark its pair model does not gain ($0.921 \pm
+0.005$ against $0.918 \pm 0.005$; F1 $0.861$ against $0.871$) while its sentence-level model does
+($0.869$, F1 $0.803$ against $0.775$), so the formulation gap narrows to $+0.052$ AUPRC (54 items
+fixed, 31 broken, $p = 0.017$), still concentrated on passages naming three or more taxa ($+0.070$
+against $+0.019$). On BioRED it widens, to $+0.113$. Since the change does not carry to the
+pair-conditioned model the pipeline runs, we keep the base encoder.
+
 
 \section{Recall side}
 \label{sec:recall}
@@ -1039,7 +1079,8 @@ authority classes, and in a second variant for co-listing --- and retrained. The
 AUPRC unchanged within seed noise and the second cost $0.037$. Mechanisms that are properties of the
 candidate are better answered by a rule than taught to a classifier. Deltas in the first four rows
 were measured under an earlier version of the evaluation and are given as directions. The last row
-is the best of the six recipes of \S\ref{sec:res-ablation} on development data: BiomedBERT-large
+is one of the two recipes of \S\ref{sec:res-ablation} that passed the development screen (the other
+is in Appendix~\ref{app:encoders}): BiomedBERT-large
 raises the BioRED pair model's development AUPRC from $0.892$ to $0.905$ (three-seed means), but on
 the BC8 test set the pair model scores $0.843 \pm 0.005$ against $0.843 \pm 0.004$, F1 $0.814$
 against $0.817$, EP F1 $67.4 \pm 0.4$ against $67.1 \pm 0.3$, and the sentence-level model $0.741$
