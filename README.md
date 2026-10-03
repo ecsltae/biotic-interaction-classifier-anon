@@ -74,6 +74,7 @@ python3 scripts/biored_ep_eval.py --src data/raw/bioredirect   # -> results/pape
 python3 scripts/llm_baseline.py --bench biodiv --model qwen3:32b
 python3 scripts/llm_baseline.py --bench biored --model qwen3:32b --n 3000
 python3 scripts/paperA_tables.py --bench biodiv --llm-only
+python3 scripts/paperA_tables.py --bench biored --llm-only
 
 # 5. Figure
 python3 paperA/fig/make_threshold_figure.py
@@ -88,7 +89,7 @@ python3 paperA/fig/make_threshold_figure.py
 | Candidate rules (body paragraph and appendix table) | `tables_biodiv.json`: `rules7`, `rules8`, `reject50` |
 | BioRED table: AUPRC, F1, 2 vs. >=3 concepts | `tables_biored.json` |
 | BioRED entity-pair F1 | `biored_ep.json` |
-| Zero-shot Qwen3 rows (biodiversity and BioRED) | `tables_*.json`: `llm` |
+| Zero-shot Qwen3 rows (biodiversity and BioRED), and the scaling table by model size (appendix) | `tables_*.json`: `llm` |
 | Threshold figure | `make_threshold_figure.py` (reads `S_biodiv_*.npy`, `tables_biodiv.json` and the benchmark) |
 | Teacher prompts (appendix) | `teacher_label_triples.py`, `llm_baseline.py` |
 

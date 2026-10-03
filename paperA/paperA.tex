@@ -40,9 +40,12 @@ the same gap at twice the size ($0.789 \to 0.943$). The same comparison on the p
 way, gives $0.738 \to 0.843$ on the BioCreative VIII test set ($p = 5.9\times10^{-148}$) and
 $+9.6$ points of its standard entity-pair F1, and the gain lies where the argument puts it: none on
 sentences that name two entities, $+0.120$ on sentences that name more. We analyse the
-errors that remain, test deterministic candidate rules, and report the deployed model: a 110M-parameter
-pair-conditioned verifier that also labels interaction direction in four categories and runs at 33
-candidates per second on a CPU.
+remaining errors, test candidate rules, and report the deployed model: a 110M-parameter
+pair-conditioned verifier that also labels direction in four categories, at 33 candidates per
+second on a CPU.
+% ANONYMOUS LINK: replace XXXX with the anonymous.4open.science repository ID
+% (results/overnight_2026-10-03/ANONYMOUS_4OPEN_SCIENCE.md); camera-ready: the public repository.
+Code: \url{https://anonymous.4open.science/r/XXXX}.
 \end{abstract}
 
 \section{Introduction}
@@ -802,6 +805,41 @@ Answer YES only if ALL of the following hold:
 Reply with exactly one word: YES or NO.
 \end{verbatim}
 \end{footnotesize}
+
+\section{Zero-shot scaling}
+\label{app:scaling}
+
+\begin{table}[t]\centering\footnotesize
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{lccccc}
+\toprule
+ & \multicolumn{3}{c}{Biodiversity, 437} & \multicolumn{2}{c}{BioRED, 3{,}000} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-6}
+Qwen3 & sent. & pair & triple & sent. & pair \\
+\midrule
+0.6B & 0.640 & 0.644 & 0.638 & 0.522 & 0.523 \\
+1.7B & 0.753 & 0.794 & 0.828 & 0.533 & 0.648 \\
+8B   & 0.802 & 0.898 & 0.936 & 0.524 & 0.800 \\
+14B  & 0.797 & 0.920 & 0.949 & 0.555 & 0.805 \\
+32B (teacher) & 0.789 & 0.943 & 0.946 & 0.566 & 0.813 \\
+\midrule
+trained, same rows & 0.855 & 0.923 & 0.909 & 0.757 & 0.860 \\
+\bottomrule
+\end{tabular}
+\caption{AUPRC of zero-shot Qwen3 \citep{qwen2025technical} by size, asked the three questions of
+Appendix~\ref{app:prompts} (4-bit builds served locally, thinking disabled; the triple question in
+both argument orders, maxed). Base rates $0.563$ and $0.476$. Last row: the trained
+three-checkpoint ensembles on the same rows.}
+\label{tab:scaling}
+\end{table}
+
+Table~\ref{tab:scaling} repeats the zero-shot comparison across model sizes. At 0.6B the three
+questions sit near the base rate: the model cannot do the task, whatever it is asked. From 1.7B on,
+the pair question is ahead on both benchmarks, and it is the question that improves with size: on
+biodiversity the pair question's lead over the sentence question grows from $+0.041$ (1.7B) to
+$+0.096$, $+0.123$ and $+0.154$ (32B), while the sentence question stops improving at 8B
+($0.80$). On BioRED the sentence question stays near its base rate at every size ($0.52$--$0.57$)
+and the pair question reaches $0.80$ from 8B on.
 
 \section{Error examples}
 \label{app:examples}

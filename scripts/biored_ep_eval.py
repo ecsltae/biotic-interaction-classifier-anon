@@ -41,7 +41,10 @@ ARMS = {"sentence": ("biored_bc8", "models/biored_bc8/sentence_s{}"),
         "pair": ("biored_bc8", "models/biored_bc8/pair_s{}"),
         "pair_mark": ("biored_bc8", "models/biored_bc8/pair_mark_s{}"),
         "mark_canon": ("biored_bc8", "models/biored_bc8/mark_canon_s{}"),
-        "doc_pair": ("biored_bc8_doc", "models/biored_bc8_doc/pair_s{}")}
+        "doc_pair": ("biored_bc8_doc", "models/biored_bc8_doc/pair_s{}"),
+        # BiomedBERT-large (lr 2e-5, 3 epochs), chosen on development data by the 2026-10-03 sweep
+        "sentence_large": ("biored_bc8", "models/large/biored_sentence_s{}"),
+        "pair_large": ("biored_bc8", "models/large/biored_pair_s{}")}
 PUBLISHED_BC8_EP = {"PubMedBERT": 74.07, "BioREx": 74.75, "BioREDirect": 75.34,
                     "GPT-4 zero-shot": 42.93, "GPT-3.5 fine-tuned": 70.18, "Llama3.2-11B fine-tuned": 68.78}
 

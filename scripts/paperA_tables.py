@@ -18,6 +18,7 @@ Decisions fixed in advance, not chosen on the reporting set:
 Usage
   python3 scripts/paperA_tables.py --bench biodiv
   python3 scripts/paperA_tables.py --bench biored
+  python3 scripts/paperA_tables.py --bench biodiv --arms large   # adds *_large keys, keeps the rest
 """
 from __future__ import annotations
 
@@ -44,6 +45,12 @@ ARMS_BIODIV = {"sentence": "models/sentence_baseline/xenc_s{}", "pair": "models/
                "triple": "models/student_v3/xenc_s{}"}
 ARMS_BIORED = {"sentence": "models/biored_bc8/sentence_s{}", "pair": "models/biored_bc8/pair_s{}",
                "pair_mark": "models/biored_bc8/pair_mark_s{}", "mark_canon": "models/biored_bc8/mark_canon_s{}"}
+# BiomedBERT-large, lr 2e-5, 3 epochs: the recipe the 2026-10-03 sweep chose on development data
+# (BioRED pair dev AUPRC and the biodiversity pair arm's internal dev split). --arms large scores
+# these and writes every key with a "_large" suffix next to the base-encoder keys.
+ARMS_BIODIV_LARGE = {"sentence": "models/large/biodiv_sentence_s{}", "pair": "models/large/biodiv_pair_s{}",
+                     "triple": "models/large/biodiv_triple_s{}"}
+ARMS_BIORED_LARGE = {"sentence": "models/large/biored_sentence_s{}", "pair": "models/large/biored_pair_s{}"}
 LLM_DIR = REPO / "results/paperA_v2/llm"
 
 
@@ -86,7 +93,7 @@ def per_block_pred(s, blocks, thr):
     return np.array([int(v >= thr[b]) for v, b in zip(s, blocks)])
 
 
-def biodiv(dev):
+def biodiv(dev, arms=ARMS_BIODIV, sfx=""):
     d = pd.read_csv(REPO / "data/evaluation/unified_test_set.csv")
     scan = pd.read_csv(REPO / "results/test_contamination_scan.csv")
     d = d[~(d.in_train.to_numpy() | (scan.maxj.to_numpy() > 0.5))].reset_index(drop=True)
@@ -97,32 +104,33 @@ def biodiv(dev):
     multi = nt.n_taxa.to_numpy() >= 3
     out, S, PRED = {"n": 437, "positives": 246}, {}, {}
 
-    for arm, pat in ARMS_BIODIV.items():
+    for arm, pat in arms.items():
         per = [order_free(REPO / pat.format(s), d, dev) for s in (1, 2, 3)]
         S[arm] = np.mean(per, axis=0)
         pred, thr = block_held_out(y, S[arm], blocks)
         PRED[arm] = pred
         aps = [ap(y, p) for p in per]
-        out[arm] = {"auprc_per_seed": aps, "auprc_mean": float(np.mean(aps)),
+        out[arm + sfx] = {"auprc_per_seed": aps, "auprc_mean": float(np.mean(aps)),
                     "auprc_sd": float(np.std(aps, ddof=1)), "auprc_ensemble": float(ap(y, S[arm])),
                     "thresholds": thr, **prf(y, pred),
                     "auprc_le2_taxa": float(ap(y[~multi], S[arm][~multi])),
                     "auprc_ge3_taxa": float(ap(y[multi], S[arm][multi])),
                     "auprc_by_block": {b: float(ap(y[blocks == b], S[arm][blocks == b])) for b in sorted(set(blocks))}}
-        np.save(OUT / f"S_biodiv_{arm}.npy", S[arm])
+        np.save(OUT / f"S_biodiv_{arm}{sfx}.npy", S[arm])
     out["n_le2_taxa"], out["n_ge3_taxa"] = int((~multi).sum()), int(multi.sum())
     out["n_ge3_taxa_positives"] = int(y[multi].sum())
-    out["mcnemar"] = {f"{b}_vs_{a}": dict(zip(("p", "fixes", "breaks"), mcnemar(PRED[a], PRED[b], y)))
-                      for a, b in (("sentence", "pair"), ("sentence", "triple"), ("pair", "triple"))}
-    out["llm"] = llm_rows("biodiv", y, S, multi, blocks)
+    out["mcnemar" + sfx] = {f"{b}_vs_{a}": dict(zip(("p", "fixes", "breaks"), mcnemar(PRED[a], PRED[b], y)))
+                            for a, b in (("sentence", "pair"), ("sentence", "triple"), ("pair", "triple"))}
+    if not sfx:            # the LLM rows of a suffixed run are refreshed with --llm-only (all saved S_*.npy)
+        out["llm"] = llm_rows("biodiv", y, S, multi, blocks)
 
     # operating curves
-    out["curve"] = {arm: [{"tau": float(t), **prf(y, (S[arm] >= t).astype(int))}
+    out["curve" + sfx] = {arm: [{"tau": float(t), **prf(y, (S[arm] >= t).astype(int))}
                           for t in (0.01, 0.04, 0.10, 0.25, 0.50, 0.90)] for arm in S}
 
     # recall side: the discarded candidates
     m = blocks == "reject50"
-    out["reject50"] = {arm: {"recovered": int(((PRED[arm] == 1) & (y == 1) & m).sum()),
+    out["reject50" + sfx] = {arm: {"recovered": int(((PRED[arm] == 1) & (y == 1) & m).sum()),
                              "of_positives": int((y[m] == 1).sum()),
                              "readmitted": int(((PRED[arm] == 1) & (y == 0) & m).sum()),
                              "of_negatives": int((y[m] == 0).sum()),
@@ -135,11 +143,11 @@ def biodiv(dev):
                         for p, a, r, b in zip(d.sentence, d.species1, d.relation, d.species2)])
         pr = base * ~rej
         p, fx, br = mcnemar(base, pr, y)
-        out[tag] = {**prf(y, pr), "mcnemar_p": p, "fixed": fx, "broken": br,
+        out[tag + sfx] = {**prf(y, pr), "mcnemar_p": p, "fixed": fx, "broken": br,
                     "per_block_F1": {b: float(f1_score(y[blocks == b], pr[blocks == b])) for b in sorted(set(blocks))}}
 
     # query ablation of the triple arm, at the triple arm's own per-block held-out thresholds
-    thr = out["triple"]["thresholds"]
+    thr = out["triple" + sfx]["thresholds"]
     rng = np.random.default_rng(0)
     perm = rng.permutation(len(d))
     blank = [""] * len(d)
@@ -148,16 +156,16 @@ def biodiv(dev):
                 "shuffled": d.assign(relation=d.relation.iloc[perm].values),
                 "rel_only": d.assign(species1=blank, species2=blank),
                 "empty": d.assign(species1=blank, relation=blank, species2=blank)}
-    out["ablation"] = {}
+    out["ablation" + sfx] = {}
     for name, v in variants.items():
-        per = [order_free(REPO / ARMS_BIODIV["triple"].format(s), v, dev) for s in (1, 2, 3)]
+        per = [order_free(REPO / arms["triple"].format(s), v, dev) for s in (1, 2, 3)]
         sv = np.mean(per, axis=0)
-        out["ablation"][name] = {"auprc": float(ap(y, sv)), "auprc_sd": float(np.std([ap(y, p) for p in per], ddof=1)),
+        out["ablation" + sfx][name] = {"auprc": float(ap(y, sv)), "auprc_sd": float(np.std([ap(y, p) for p in per], ddof=1)),
                                  **prf(y, per_block_pred(sv, blocks, thr))}
     return out
 
 
-def biored(dev):
+def biored(dev, arms=ARMS_BIORED, sfx=""):
     d = pd.read_csv(REPO / "data/benchmarks/biored_bc8/test.csv")
     d = d.rename(columns={"source_species": "species1", "target_species": "species2",
                           "interaction_type": "relation", "text": "sentence"})
@@ -165,25 +173,27 @@ def biored(dev):
     y, multi = d.label.to_numpy(), d.n_concepts.to_numpy() >= 3
     out, S, PRED = {"n": int(len(d)), "positives": int(y.sum()),
                     "n_2_concepts": int((~multi).sum()), "n_ge3_concepts": int(multi.sum())}, {}, {}
-    for arm, pat in ARMS_BIORED.items():
+    for arm, pat in arms.items():
         mds = [REPO / pat.format(s) for s in (1, 2, 3)]
         per = [order_free(md, d, dev) for md in mds]
         S[arm] = np.mean(per, axis=0)
         thr = float(np.mean([json.loads((md / "student_config.json").read_text())["threshold_dev"] for md in mds]))
         PRED[arm] = (S[arm] >= thr).astype(int)
         aps = [ap(y, p) for p in per]
-        out[arm] = {"auprc_per_seed": aps, "auprc_mean": float(np.mean(aps)), "auprc_sd": float(np.std(aps, ddof=1)),
+        out[arm + sfx] = {"auprc_per_seed": aps, "auprc_mean": float(np.mean(aps)), "auprc_sd": float(np.std(aps, ddof=1)),
                     "auprc_ensemble": float(ap(y, S[arm])), "threshold_prespecified": thr, **prf(y, PRED[arm]),
                     "auprc_2_concepts": float(ap(y[~multi], S[arm][~multi])),
                     "auprc_ge3_concepts": float(ap(y[multi], S[arm][multi])),
                     "auprc_2_concepts_per_seed": [float(ap(y[~multi], p[~multi])) for p in per],
                     "auprc_ge3_concepts_per_seed": [float(ap(y[multi], p[multi])) for p in per]}
-        np.save(OUT / f"S_biored_{arm}.npy", S[arm])
-    out["mcnemar_pair_vs_sentence"] = dict(zip(("p", "fixes", "breaks"), mcnemar(PRED["sentence"], PRED["pair"], y)))
+        np.save(OUT / f"S_biored_{arm}{sfx}.npy", S[arm])
+    out["mcnemar_pair_vs_sentence" + sfx] = dict(zip(("p", "fixes", "breaks"), mcnemar(PRED["sentence"], PRED["pair"], y)))
     for arm in ("pair_mark", "mark_canon"):
-        out[f"mcnemar_{arm}_vs_pair"] = dict(zip(("p", "fixes", "breaks"), mcnemar(PRED["pair"], PRED[arm], y)))
+        if arm in PRED:
+            out[f"mcnemar_{arm}_vs_pair{sfx}"] = dict(zip(("p", "fixes", "breaks"), mcnemar(PRED["pair"], PRED[arm], y)))
     out["base_rate"] = float(y.mean())
-    out["llm"] = llm_rows("biored", y, S, multi)
+    if not sfx:
+        out["llm"] = llm_rows("biored", y, S, multi)
     return out
 
 
@@ -212,6 +222,9 @@ def llm_rows(bench, y, S, multi=None, blocks=None):
 def main() -> None:
     ap_ = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap_.add_argument("--bench", choices=("biodiv", "biored"), required=True)
+    ap_.add_argument("--arms", choices=("base", "large"), default="base",
+                     help="base: the BiomedBERT-base arms (writes the unsuffixed keys); large: the "
+                          "BiomedBERT-large arms, merged into the existing JSON under *_large keys")
     ap_.add_argument("--llm-only", action="store_true",
                      help="recompute only the LLM rows, from the saved S_*.npy of an earlier full run")
     a = ap_.parse_args()
@@ -233,7 +246,14 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     torch.set_float32_matmul_precision("high")
-    res = biodiv(dev) if a.bench == "biodiv" else biored(dev)
+    if a.arms == "large":
+        new = biodiv(dev, ARMS_BIODIV_LARGE, "_large") if a.bench == "biodiv" else biored(dev, ARMS_BIORED_LARGE, "_large")
+        res = {**json.loads((OUT / f"tables_{a.bench}.json").read_text()), **new}
+    else:
+        res = biodiv(dev) if a.bench == "biodiv" else biored(dev)
+        prev = OUT / f"tables_{a.bench}.json"   # keep the *_large keys of an earlier --arms large run
+        if prev.exists():
+            res = {**{k: v for k, v in json.loads(prev.read_text()).items() if k.endswith("_large")}, **res}
     (OUT / f"tables_{a.bench}.json").write_text(json.dumps(res, indent=2, default=float))
     print(json.dumps(res, indent=1, default=float)[:6000])
 
