@@ -13,6 +13,10 @@ leaves the machine. Resumable: rows already in the output are skipped.
 Usage
   python3 scripts/llm_baseline.py --bench biodiv --model qwen3:32b
   python3 scripts/llm_baseline.py --bench biored --model qwen3:32b --n 3000
+  python3 scripts/llm_baseline.py --bench biodiv --model qwen3.5:122b --num-gpu 44 --num-ctx 4096
+
+qwen3.5:122b (81 GB) does not fit on the 80 GB card; with Ollama's own layer split it aborts in
+cuBLAS while loading, so --num-gpu caps the GPU layers (44 of 49 load; the rest run on the CPU).
 """
 from __future__ import annotations
 
@@ -81,10 +85,13 @@ def teacher_prompt() -> str:
     return re.search(r'PROMPT = """(.*?)"""', src, re.S).group(1)
 
 
+OPTIONS = {"temperature": 0, "num_predict": 1, "seed": 0}
+
+
 def ask(model: str, prompt: str) -> tuple[float, str]:
     r = requests.post(URL, timeout=600, json={
         "model": model, "prompt": prompt, "stream": False, "think": False, "logprobs": True,
-        "top_logprobs": 10, "options": {"temperature": 0, "num_predict": 1, "seed": 0}}).json()
+        "top_logprobs": 10, "options": OPTIONS}).json()
     text = r.get("response", "").strip()
     yes = no = 0.0
     for t in (r.get("logprobs") or [{}])[0].get("top_logprobs", []):
@@ -117,7 +124,10 @@ def main() -> None:
     ap.add_argument("--forms", nargs="*", default=None)
     ap.add_argument("--n", type=int, default=3000, help="BioRED test candidates to sample (seed 0)")
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--num-gpu", type=int, default=None, help="GPU layers (Ollama num_gpu); default: Ollama decides")
+    ap.add_argument("--num-ctx", type=int, default=None, help="context window (Ollama num_ctx)")
     a = ap.parse_args()
+    OPTIONS.update({k: v for k, v in (("num_gpu", a.num_gpu), ("num_ctx", a.num_ctx)) if v is not None})
     OUT.mkdir(parents=True, exist_ok=True)
     d = load(a.bench, a.n)
     prompts = dict(BIODIV if a.bench == "biodiv" else BIORED)

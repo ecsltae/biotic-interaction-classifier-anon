@@ -16,6 +16,7 @@ the tables can be checked without retraining.
 | `scripts/biored_ep_eval.py` | BioRED entity-pair F1 (the standard document-level metric) |
 | `scripts/llm_baseline.py` | zero-shot local LLM rows (Ollama), same three formulations as the trained arms |
 | `scripts/teacher_label_triples.py` | the teacher's labelling prompt (also read by `llm_baseline.py` for the triple question) |
+| `scripts/soft_relabel.py` | re-queries the teacher for P(yes) on every training row (soft-label appendix) |
 | `scripts/convert_biored_verify.py` | builds the sentence-scope BioRED candidate tables (BC8 protocol) |
 | `scripts/convert_biored_doc.py` | builds the whole-abstract BioRED candidate tables |
 | `scripts/run_biored_bc8.sh`, `scripts/run_biored_bc8_doc.sh` | train the BioRED arms (3 seeds each) |
@@ -51,6 +52,9 @@ The LLM rows need [Ollama](https://ollama.com) on `localhost:11434` with the Qwe
 builds: `qwen3:0.6b`, `qwen3:1.7b`, `qwen3:4b-q4_K_M`, `qwen3:8b`, `qwen3:14b`,
 `qwen3:30b-a3b-q4_K_M`, `qwen3:32b`. The default `qwen3:4b` and `qwen3:30b` tags now point to later
 re-releases that ignore `think: false`; `llm_baseline.py` stops if a model does not answer YES/NO.
+`qwen3.5:122b` (81 GB) does not fit on one 80 GB GPU, and Ollama's own layer split aborted in
+cuBLAS on ours; `--num-gpu 44 --num-ctx 4096` (44 of 49 layers on the GPU, the rest on the CPU)
+runs it at about 1.4 s per candidate.
 
 ## Reproducing the results
 
@@ -79,7 +83,15 @@ python3 scripts/llm_baseline.py --bench biored --model qwen3:32b --n 3000
 python3 scripts/paperA_tables.py --bench biodiv --llm-only
 python3 scripts/paperA_tables.py --bench biored --llm-only
 
-# 5. Figure
+# 5. Soft-label students (appendix): teacher P(yes) on the training rows, three arms x three seeds
+python3 scripts/soft_relabel.py          # -> data/training/distill/v3_combined_train_soft.csv
+for fmt in sentence pair triple; do for s in 1 2 3; do
+  python3 experiments/multitask/train_student.py --data data/training/distill/v3_combined_train_soft.csv \
+      --soft-col soft_label --input-format $fmt --seed $s --out models/soft_students/${fmt}_s$s
+done; done
+python3 scripts/paperA_tables.py --bench biodiv --arms soft    # adds *_soft keys
+
+# 6. Figure
 python3 paperA/fig/make_threshold_figure.py
 ```
 
@@ -95,6 +107,7 @@ python3 paperA/fig/make_threshold_figure.py
 | Zero-shot Qwen3 rows (biodiversity and BioRED), and the scaling table by model size (appendix) | `tables_*.json`: `llm` |
 | Threshold figure | `make_threshold_figure.py` (reads `S_biodiv_*.npy`, `tables_biodiv.json` and the benchmark) |
 | Teacher prompts (appendix) | `teacher_label_triples.py`, `llm_baseline.py` |
+| Soft-label distillation (appendix table) | `tables_biodiv.json`: `sentence_soft`, `pair_soft`, `triple_soft`, `mcnemar_soft` (between soft arms), `mcnemar_vs_base_soft` (each soft arm against the verdict-trained arm of the same format) |
 | Larger-encoder negative result (encoder paragraph, negative-results appendix) | `tables_biored.json`: `sentence_large`, `pair_large`, `mcnemar_pair_vs_sentence_large`; `biored_ep.json`: same arm names (`paperA_tables.py --bench biored --arms large`) |
 
 The `S_<bench>_<arm>.npy` arrays are the three-checkpoint mean scores, row-aligned with the clean

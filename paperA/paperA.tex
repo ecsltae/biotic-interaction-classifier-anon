@@ -33,7 +33,7 @@ before it is asked; what needs deciding is whether the passage asserts an intera
 \emph{these two}. We test the claim with a controlled comparison: one encoder, one 48k-row
 teacher-labelled corpus, three seeds, differing only in what the model is shown. On 437
 expert-graded candidates, telling the model which pair the candidate is about raises AUPRC from
-$0.851$ to $0.919$ and F1 from $0.775$ to $0.871$ (75 items fixed against 22 broken, McNemar
+$0.851$ to $0.918$ and F1 from $0.775$ to $0.871$ (75 items fixed against 22 broken, McNemar
 $p = 1.3\times10^{-7}$), at every one of 99 thresholds; adding the relation term to the query buys
 nothing further. The 32B model that labelled the corpus, asked the same questions zero-shot, shows
 the same gap at twice the size ($0.789 \to 0.943$). The same comparison on the public BioRED corpus, with candidates built the same
@@ -223,7 +223,7 @@ System & AUPRC & P & R & F1 \\
 \midrule
 Accept everything  & 0.563 & 0.563 & 1.000 & 0.720 \\
 Sentence-level     & $0.851_{\pm .006}$ & 0.730 & 0.825 & 0.775 \\
-Pair-conditioned   & $\mathbf{0.919}_{\pm .005}$ & \textbf{0.849} & \textbf{0.894} & \textbf{0.871} \\
+Pair-conditioned   & $\mathbf{0.918}_{\pm .005}$ & \textbf{0.849} & \textbf{0.894} & \textbf{0.871} \\
 Triple-conditioned & $0.909_{\pm .004}$ & 0.820 & 0.886 & 0.852 \\
 \midrule
 \multicolumn{5}{l}{\emph{The 32B teacher, zero-shot, asked the same three questions}} \\
@@ -272,7 +272,7 @@ passages name $5.1$ taxa on average, \textsc{Biotx100} $2.6$ and \textsc{Reject5
 \subsection{Conditioning on the pair}
 \label{sec:res-main}
 Table~\ref{tab:main} gives the comparison. Telling the model which pair a candidate is about raises
-per-seed AUPRC from $0.851 \pm 0.006$ to $0.919 \pm 0.005$ and, at block-held-out thresholds, F1
+per-seed AUPRC from $0.851 \pm 0.006$ to $0.918 \pm 0.005$ and, at block-held-out thresholds, F1
 from $0.775$ to $0.871$, precision and recall both. On decision correctness the pair-conditioned
 model fixes 75 items and breaks 22, McNemar $p = 1.3\times10^{-7}$. The advantage does not depend on
 where we cut: it is ahead at every one of 99 thresholds, by at least $0.058$ F1
@@ -293,11 +293,11 @@ the same place: $+0.180$ on passages naming three or more taxa against $+0.104$ 
 the student's is $+0.084$ against $+0.042$. A model three hundred times smaller that is asked the
 right question beats the teacher asked the wrong one by $0.13$ AUPRC. As with the student, the
 relation term adds nothing ($0.946$ against $0.943$). Nor is the gap a property of one model size:
-from Qwen3-1.7B to 32B the pair question leads, by $+0.04$ to $+0.15$ AUPRC on our benchmark and
-$+0.11$ to $+0.28$ on BioRED; at 0.6B no question is far above the base rate
-(Appendix~\ref{app:scaling}). Against its own teacher the pair-conditioned
-student gives up $0.027$ AUPRC and nothing in F1 at block-held-out thresholds ($0.871$ against
-$0.870$), at 33 candidates per second on a CPU.
+from Qwen3-1.7B to Qwen3.5-122B the pair question leads, by $+0.04$ to $+0.20$ AUPRC on our
+benchmark and $+0.11$ to $+0.32$ on BioRED (Appendix~\ref{app:scaling}). Against its own teacher the
+pair-conditioned student gives up $0.027$ AUPRC, which training on the teacher's probabilities
+instead of its verdicts does not recover (Appendix~\ref{app:soft}), and nothing in F1 at
+block-held-out thresholds ($0.871$ against $0.870$), at 33 candidates per second on a CPU.
 
 Table~\ref{tab:where} locates the gain, and it is the most direct test of the argument. On passages
 that name three or more taxa, the pair query is worth $+0.084$ AUPRC. On passages naming two or
@@ -619,7 +619,7 @@ literature-mined biotic-interaction triples against their source passage before 
 When candidates are retrieved by co-occurrence, the sentence-level question is answered before it
 is asked, and a classifier built for it is left with little to decide. Telling the model which pair
 the candidate is about --- with the same encoder and the same data --- raises AUPRC from $0.851$ to
-$0.919$ on the biodiversity benchmark and from $0.738$ to $0.843$ on BioRED, and the relation term adds
+$0.918$ on the biodiversity benchmark and from $0.738$ to $0.843$ on BioRED, and the relation term adds
 nothing on top. The gain sits where the argument puts it: on passages that name more than one
 candidate pair, and, where candidates come from automatic matching, on candidates whose arguments
 are not organisms. The result is a calibrated score where a verdict stood, with a four-way direction
@@ -708,7 +708,7 @@ seed & sent. & pair & triple & sent. & pair & triple \\
 2 & .851 & .921 & .905 & .698 & .758 & .847 \\
 3 & .845 & .912 & .909 & .663 & .788 & .834 \\
 \midrule
-mean & .851 & .919 & .909 & .664 & .779 & .841 \\
+mean & .851 & .918 & .909 & .664 & .779 & .841 \\
 sd   & .006 & .005 & .004 & .033 & .018 & .006 \\
 \bottomrule
 \end{tabular}
@@ -718,6 +718,47 @@ the three models are calibrated differently, and a single shared threshold would
 arbitrarily.}
 \label{tab:perseed}
 \end{table}
+
+\section{Soft-label distillation}
+\label{app:soft}
+
+\begin{table}[t]\centering\small
+\setlength{\tabcolsep}{2.8pt}
+\begin{tabular}{llcccc}
+\toprule
+ & & & & \multicolumn{2}{c}{AUPRC, taxa} \\
+\cmidrule(lr){5-6}
+Model & Target & AUPRC & F1 & $\le 2$ & $\ge 3$ \\
+\midrule
+Sentence & verdict & $0.851_{\pm .006}$ & 0.775 & 0.876 & 0.846 \\
+         & $P(\textsc{yes})$ & $0.857_{\pm .009}$ & 0.769 & 0.885 & 0.850 \\
+Pair     & verdict & $0.918_{\pm .005}$ & 0.871 & 0.918 & 0.930 \\
+         & $P(\textsc{yes})$ & $0.920_{\pm .006}$ & 0.873 & 0.924 & 0.927 \\
+Triple   & verdict & $0.909_{\pm .004}$ & 0.852 & 0.879 & 0.930 \\
+         & $P(\textsc{yes})$ & $0.919_{\pm .004}$ & 0.873 & 0.908 & 0.929 \\
+\bottomrule
+\end{tabular}
+\caption{The three arms trained on the teacher's verdicts (the body's models) and on its
+probabilities, recipe and seeds unchanged; columns as in Tables~\ref{tab:main} and~\ref{tab:where}.
+Per-seed AUPRC with soft targets: $.847/.864/.861$, $.927/.917/.917$ and $.920/.921/.915$. Against
+the verdict-trained model of the same format, the soft-target model fixes 14 items and breaks 13
+(sentence), 13 and 14 (pair), 19 and 7 (triple; McNemar $p = 1.0$, $1.0$, $0.03$).}
+\label{tab:soft}
+\end{table}
+
+The students learn from the teacher's verdicts. We re-queried the teacher for $P(\textsc{yes})$ on
+all 48{,}338 training rows (same prompt and inputs; its verdicts agree with the corpus labels on
+99.7\% of rows, and 24\% of the probabilities lie between $0.05$ and $0.95$) and trained the three
+arms again against these soft targets with a soft cross-entropy, selecting checkpoints on the same
+hard-labelled development split. It is the only distillation variant we tried, scored once
+(Table~\ref{tab:soft}). The sentence-level and pair-conditioned models do not move. The
+triple-conditioned model gains $0.010$ AUPRC, on every seed, and $0.021$ F1 ($p = 0.03$ before
+correcting for three comparisons), which brings it level with the pair model ($0.919$ against
+$0.920$; 24 items fixed, 22 broken, $p = 0.88$) rather than past it. The comparison is unchanged:
+the pair query lifts AUPRC from $0.857$ to $0.920$ (80 fixed, 29 broken, $p = 1.7\times10^{-6}$),
+by $+0.077$ on passages naming three or more taxa and $+0.039$ on the rest. Nor do probabilities
+close the pair model's distance to its teacher's $0.946$ ($0.026$ AUPRC, against $0.027$ with
+verdicts). The body keeps the verdict-trained models, on which every other analysis was run.
 
 
 \section{Recall side}
@@ -834,24 +875,33 @@ Qwen3 & sent. & pair & triple & sent. & pair \\
 30B-A3B & 0.777 & 0.902 & 0.933 & 0.571 & 0.792 \\
 32B (teacher) & 0.789 & 0.943 & 0.946 & 0.566 & 0.813 \\
 \midrule
+Qwen3.5-122B & 0.773 & 0.968 & 0.965 & $0.490^\dagger$ & $0.811^\dagger$ \\
+\midrule
 trained, same rows & 0.855 & 0.923 & 0.909 & 0.757 & 0.860 \\
 \bottomrule
 \end{tabular}
 \caption{AUPRC of zero-shot Qwen3 \citep{qwen2025technical} by size, asked the three questions of
 Appendix~\ref{app:prompts} (4-bit builds served locally, thinking disabled; the triple question in
-both argument orders, maxed). 30B-A3B is a mixture of experts with 3B active parameters. Base
-rates $0.563$ and $0.476$. Last row: the trained three-checkpoint ensembles on the same rows.}
+both argument orders, maxed). 30B-A3B is a mixture of experts with 3B active parameters;
+Qwen3.5-122B, a later release, is a mixture of experts with 8 of 256 experts active per token, run
+partly on the CPU. Base rates $0.563$ and $0.476$. Last row: the trained three-checkpoint ensembles
+on the same rows. $^\dagger$On the first 1{,}000 candidates of the sample (base rate $0.442$), where
+the 32B model scores $0.527$ and $0.796$ and the trained models $0.714$ and $0.841$.}
 \label{tab:scaling}
 \end{table}
 
 Table~\ref{tab:scaling} repeats the zero-shot comparison across model sizes. At 0.6B the three
 questions sit close to the base rate ($0.64$ against $0.563$; $0.52$ against $0.476$): at that size
 the model barely does the task, whatever it is asked. From 1.7B on, the pair question is ahead at
-every size on both benchmarks: by $+0.040$ AUPRC at 1.7B and by $+0.10$ to $+0.15$ from 4B on
-($+0.11$, then $+0.20$ to $+0.28$, on BioRED). The sentence question gains little with size
-($0.74$--$0.80$ on ours from 4B on; $0.52$--$0.57$ on BioRED throughout, near its base rate), so
-scale mostly improves the answer to the right question. The lead is not monotonic in size; it is
-largest for the 32B model on ours ($+0.155$).
+every size on both benchmarks: by $+0.040$ AUPRC at 1.7B and by $+0.10$ to $+0.20$ from 4B on
+($+0.11$, then $+0.20$ to $+0.32$, on BioRED). The sentence question gains little with size
+($0.74$--$0.80$ on ours from 4B on; $0.49$--$0.57$ on BioRED throughout, near its base rate), so
+scale mostly improves the answer to the right question. The lead is not monotonic in size among the
+Qwen3 models, and it is largest for the 122B model: $+0.195$ on ours and $+0.321$ on its BioRED
+subsample, where the 32B model's is $+0.270$. Asked about the pair, the 122B model ranks our
+benchmark better than any trained model ($0.968$; the pair-conditioned student $0.918$), which
+suggests that the headroom left on it lies in a stronger teacher rather than in a different student
+recipe (Appendix~\ref{app:soft}); asked the sentence-level question, it scores $0.773$.
 
 \section{Error examples}
 \label{app:examples}
@@ -995,5 +1045,9 @@ the BC8 test set the pair model scores $0.843 \pm 0.005$ against $0.843 \pm 0.00
 against $0.817$, EP F1 $67.4 \pm 0.4$ against $67.1 \pm 0.3$, and the sentence-level model $0.741$
 against $0.738$; the pair query's gain is unchanged ($+0.103$ against $+0.105$ AUPRC). It was not
 trained on all biodiversity arms, since its BioRED test result could not change the choice.
+For the whole-abstract BioRED model of \S\ref{sec:biored} we also tried, on development data only
+(seed 1), eight epochs instead of three, alone and with each concept's BioRED type in the query:
+development AUPRC $0.787$ and $0.791$ against $0.786$, inside the spread of the three-epoch seeds ($0.765$--$0.786$), so neither
+was trained further or scored on the test set.
 
 \end{document}

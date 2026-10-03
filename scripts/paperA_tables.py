@@ -19,6 +19,8 @@ Usage
   python3 scripts/paperA_tables.py --bench biodiv
   python3 scripts/paperA_tables.py --bench biored
   python3 scripts/paperA_tables.py --bench biodiv --arms large   # adds *_large keys, keeps the rest
+  python3 scripts/paperA_tables.py --bench biodiv --arms soft    # adds *_soft keys, keeps the rest
+  python3 scripts/paperA_tables.py --bench biored --arms linkbert  # adds *_linkbert keys
 """
 from __future__ import annotations
 
@@ -51,6 +53,17 @@ ARMS_BIORED = {"sentence": "models/biored_bc8/sentence_s{}", "pair": "models/bio
 ARMS_BIODIV_LARGE = {"sentence": "models/large/biodiv_sentence_s{}", "pair": "models/large/biodiv_pair_s{}",
                      "triple": "models/large/biodiv_triple_s{}"}
 ARMS_BIORED_LARGE = {"sentence": "models/large/biored_sentence_s{}", "pair": "models/large/biored_pair_s{}"}
+# Soft-label distillation: the same three arms and recipe, trained on the teacher's P(yes)
+# (scripts/soft_relabel.py, --soft-col soft_label) instead of its verdict. Biodiversity only: the
+# teacher labelled the biodiversity corpus. --arms soft writes "_soft" keys.
+ARMS_BIODIV_SOFT = {"sentence": "models/soft_students/sentence_s{}", "pair": "models/soft_students/pair_s{}",
+                    "triple": "models/soft_students/triple_s{}"}
+# BioLinkBERT-base, lr 2e-5, 3 epochs (base recipe, other encoder): screened on development data in
+# session 2 of 2026-10-03 (scripts/linkbert_screen_2026-10-03.sh). --arms linkbert: "_linkbert" keys.
+ARMS_BIODIV_LINKBERT = {"sentence": "models/linkbert/biodiv_sentence_s{}", "pair": "models/linkbert/biodiv_pair_s{}",
+                        "triple": "models/linkbert/biodiv_triple_s{}"}
+ARMS_BIORED_LINKBERT = {"sentence": "models/linkbert/biored_sentence_s{}", "pair": "models/linkbert/biored_pair_s{}"}
+SUFFIXES = ("_large", "_soft", "_linkbert")
 LLM_DIR = REPO / "results/paperA_v2/llm"
 
 
@@ -125,6 +138,13 @@ def biodiv(dev, arms=ARMS_BIODIV, sfx=""):
                             if a in PRED and b in PRED}
     if not sfx:            # the LLM rows of a suffixed run are refreshed with --llm-only (all saved S_*.npy)
         out["llm"] = llm_rows("biodiv", y, S, multi, blocks)
+    else:                  # each arm against the base arm of the same format, at its saved thresholds
+        base = json.loads((OUT / "tables_biodiv.json").read_text())
+        out["mcnemar_vs_base" + sfx] = {}
+        for arm in PRED:
+            bp = per_block_pred(np.load(OUT / f"S_biodiv_{arm}.npy"), blocks, base[arm]["thresholds"])
+            assert abs(prf(y, bp)["F1"] - base[arm]["F1"]) < 1e-9, f"base {arm} predictions not reproduced"
+            out["mcnemar_vs_base" + sfx][arm] = dict(zip(("p", "fixes", "breaks"), mcnemar(bp, PRED[arm], y)))
 
     # operating curves
     out["curve" + sfx] = {arm: [{"tau": float(t), **prf(y, (S[arm] >= t).astype(int))}
@@ -205,6 +225,13 @@ def biored(dev, arms=ARMS_BIORED, sfx=""):
     for arm in ("pair_mark", "mark_canon"):
         if arm in PRED and "pair" in PRED:
             out[f"mcnemar_{arm}_vs_pair{sfx}"] = dict(zip(("p", "fixes", "breaks"), mcnemar(PRED["pair"], PRED[arm], y)))
+    if sfx:                # each arm against the base arm of the same format, at its pre-specified threshold
+        base = json.loads((OUT / "tables_biored.json").read_text())
+        out["mcnemar_vs_base" + sfx] = {}
+        for arm in PRED:
+            bp = (np.load(OUT / f"S_biored_{arm}.npy") >= base[arm]["threshold_prespecified"]).astype(int)
+            assert abs(prf(y, bp)["F1"] - base[arm]["F1"]) < 1e-9, f"base {arm} predictions not reproduced"
+            out["mcnemar_vs_base" + sfx][arm] = dict(zip(("p", "fixes", "breaks"), mcnemar(bp, PRED[arm], y)))
     out["base_rate"] = float(y.mean())
     if not sfx:
         out["llm"] = llm_rows("biored", y, S, multi)
@@ -236,9 +263,11 @@ def llm_rows(bench, y, S, multi=None, blocks=None):
 def main() -> None:
     ap_ = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap_.add_argument("--bench", choices=("biodiv", "biored"), required=True)
-    ap_.add_argument("--arms", choices=("base", "large"), default="base",
+    ap_.add_argument("--arms", choices=("base", "large", "soft", "linkbert"), default="base",
                      help="base: the BiomedBERT-base arms (writes the unsuffixed keys); large: the "
-                          "BiomedBERT-large arms, merged into the existing JSON under *_large keys")
+                          "BiomedBERT-large arms, merged into the existing JSON under *_large keys; "
+                          "soft: the soft-label students (biodiversity only), under *_soft keys; "
+                          "linkbert: the BioLinkBERT-base arms, under *_linkbert keys")
     ap_.add_argument("--llm-only", action="store_true",
                      help="recompute only the LLM rows, from the saved S_*.npy of an earlier full run")
     a = ap_.parse_args()
@@ -263,11 +292,19 @@ def main() -> None:
     if a.arms == "large":
         new = biodiv(dev, ARMS_BIODIV_LARGE, "_large") if a.bench == "biodiv" else biored(dev, ARMS_BIORED_LARGE, "_large")
         res = {**json.loads((OUT / f"tables_{a.bench}.json").read_text()), **new}
+    elif a.arms == "linkbert":
+        new = (biodiv(dev, ARMS_BIODIV_LINKBERT, "_linkbert") if a.bench == "biodiv"
+               else biored(dev, ARMS_BIORED_LINKBERT, "_linkbert"))
+        res = {**json.loads((OUT / f"tables_{a.bench}.json").read_text()), **new}
+    elif a.arms == "soft":
+        if a.bench != "biodiv":
+            ap_.error("--arms soft: the soft-label students exist for the biodiversity corpus only")
+        res = {**json.loads((OUT / "tables_biodiv.json").read_text()), **biodiv(dev, ARMS_BIODIV_SOFT, "_soft")}
     else:
         res = biodiv(dev) if a.bench == "biodiv" else biored(dev)
-        prev = OUT / f"tables_{a.bench}.json"   # keep the *_large keys of an earlier --arms large run
+        prev = OUT / f"tables_{a.bench}.json"   # keep the suffixed keys of earlier --arms large/soft runs
         if prev.exists():
-            res = {**{k: v for k, v in json.loads(prev.read_text()).items() if k.endswith("_large")}, **res}
+            res = {**{k: v for k, v in json.loads(prev.read_text()).items() if k.endswith(SUFFIXES)}, **res}
     (OUT / f"tables_{a.bench}.json").write_text(json.dumps(res, indent=2, default=float))
     print(json.dumps(res, indent=1, default=float)[:6000])
 
