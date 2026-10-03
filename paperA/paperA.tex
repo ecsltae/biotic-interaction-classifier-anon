@@ -90,7 +90,7 @@ more.
 \item Deterministic candidate rules, validated on 42k training rows before evaluation, measured as
       a small precision gain rather than a large one (\S\ref{sec:rules}).
 \item A deployed configuration with a fixed threshold, four-way direction output and CPU
-      throughput, and five negative results (\S\ref{sec:deploy}, Appendix~\ref{sec:negative}).
+      throughput, and six negative results (\S\ref{sec:deploy}, Appendix~\ref{sec:negative}).
 \end{itemize}
 
 \section{Setting}
@@ -134,7 +134,7 @@ It is therefore enriched for known interactors and for top-ranked candidates, wh
 positive rate is far above the 31\% \citet{ruch2024biotxplorer} measured on random triples at any
 rank. \textsc{Reject50} is candidates the
 retrieval pipeline discarded, curated for the ones it should have kept: 41 clean rows, 9 positive.
-It is the paper's recall-side instrument. \textsc{Test299} is 299 pair-level items from expert
+It is the paper's recall-side instrument (Appendix~\ref{sec:recall}). \textsc{Test299} is 299 pair-level items from expert
 curation, $0.542$ positive, and is where passages most often name several taxa.
 
 The blocks do not carry the same gold. \textsc{Biotx100} is the only block graded at the level of
@@ -288,11 +288,14 @@ at $0.683$ (Table~\ref{tab:curve}).
 \paragraph{The same gap in the teacher.}
 The formulation effect is not a property of small encoders. Asked the sentence-level question
 zero-shot, the 32B teacher scores AUPRC $0.789$, below the 110M sentence-level student; asked about
-the pair, $0.943$ (Table~\ref{tab:main}). Its gap, $+0.154$, is twice the student's, and it sits in
+the pair, $0.943$ (Table~\ref{tab:main}). Its gap, $+0.155$, is twice the student's, and it sits in
 the same place: $+0.180$ on passages naming three or more taxa against $+0.104$ on the rest, where
 the student's is $+0.084$ against $+0.042$. A model three hundred times smaller that is asked the
 right question beats the teacher asked the wrong one by $0.13$ AUPRC. As with the student, the
-relation term adds nothing ($0.946$ against $0.943$). Against its own teacher the pair-conditioned
+relation term adds nothing ($0.946$ against $0.943$). Nor is the gap a property of one model size:
+from Qwen3-1.7B to 32B the pair question leads, by $+0.04$ to $+0.15$ AUPRC on our benchmark and
+$+0.11$ to $+0.28$ on BioRED; at 0.6B no question is far above the base rate
+(Appendix~\ref{app:scaling}). Against its own teacher the pair-conditioned
 student gives up $0.027$ AUPRC and nothing in F1 at block-held-out thresholds ($0.871$ against
 $0.870$), at 33 candidates per second on a CPU.
 
@@ -401,26 +404,21 @@ ranking from $0.909$ to $0.677$ against a base rate of $0.563$, and emptying the
 $0.641$. Replacing or shuffling the relation, pair kept, barely moves ranking ($0.888$, $0.904$): the
 model leans on the pair, which is what the trained pair-only model already showed.
 
-The empty-query arm is \emph{not} the sentence-level baseline: it is a model trained with the query
-and deprived of it, and it does far worse ($0.641$) than a model trained without the query from the
-start ($0.851$). Ablating an input at inference measures dependence on it; it does not stand in for
-training without it, which is why the comparison of Table~\ref{tab:main} trains all three.
+The empty-query arm is \emph{not} the sentence-level baseline: trained with the query and deprived
+of it, it does far worse ($0.641$) than a model trained without it ($0.851$). Ablation at inference
+measures dependence on an input, not what training without it gives; hence three trained arms.
 
-Nor does the gain come from the corpus's pair-contrast design. A triple-conditioned model trained on
-the 20{,}000-row base sample alone reaches per-seed AUPRC $0.918 \pm 0.003$, against $0.909 \pm 0.004$
-for the full corpus, and the same block-held-out F1 as the pair model, $0.871$. The input
-formulation is what buys the improvement; the extra supervision buys nothing we can measure here.
+Nor does the gain come from the corpus's pair-contrast design: a triple-conditioned model trained on
+the 20{,}000-row base sample alone reaches AUPRC $0.918 \pm 0.003$ (full corpus $0.909 \pm 0.004$)
+and the pair model's block-held-out F1, $0.871$.
 
-\subsection{Recall side}
-\label{sec:recall}
-\textsc{Reject50} asks whether the candidates the retrieval pipeline discarded contain recoverable
-positives, and it is too small to rank the models: nine positives, so one item moves recall by
-eleven points. At block-held-out thresholds the sentence-level model recovers 7 of the 9 by
-re-admitting 15 of the 32 correct rejections (F1 $0.452$), the pair-conditioned model recovers 4
-while re-admitting 7 ($0.400$), and the triple-conditioned model recovers 6 while re-admitting 5
-($0.600$). We read only the qualitative point: the discarded candidates do contain recoverable
-interactions, and a model that reads the candidate finds them at a lower cost in wrong
-re-admissions than one that reads only the passage.
+Nor from the encoder's size. Besides the recipe of \S\ref{sec:verifier} we tried five other recipes
+on development data only: five epochs at learning rates $1$, $2$ and $3\times10^{-5}$, and
+BiomedBERT-large (335M parameters) at $1$ and $2\times10^{-5}$. The large encoder at
+$2\times10^{-5}$ was best on both development splits ($+0.019$ AUPRC for the BioRED pair model,
+$+0.028$ for the biodiversity one, seed 1). Scored once on the BC8 test set, it moves neither model
+(sentence-level $0.741$, pair-conditioned $0.843$; EP F1 $57.6$ and $67.4$), so we keep the base
+recipe (Appendix~\ref{sec:negative}).
 
 \subsection{An operating curve, not a verdict}
 \label{sec:opoint}
@@ -722,6 +720,17 @@ arbitrarily.}
 \end{table}
 
 
+\section{Recall side}
+\label{sec:recall}
+\textsc{Reject50} asks whether the candidates the retrieval pipeline discarded contain recoverable
+positives, and it is too small to rank the models: nine positives, so one item moves recall by
+eleven points. At block-held-out thresholds the sentence-level model recovers 7 of the 9 by
+re-admitting 15 of the 32 correct rejections (F1 $0.452$), the pair-conditioned model recovers 4
+while re-admitting 7 ($0.400$), and the triple-conditioned model recovers 6 while re-admitting 5
+($0.600$). We read only the qualitative point: the discarded candidates do contain recoverable
+interactions, and a model that reads the candidate finds them at a lower cost in wrong
+re-admissions than one that reads only the passage.
+
 \section{Teacher prompts}
 \label{app:prompts}
 
@@ -834,10 +843,11 @@ three-checkpoint ensembles on the same rows.}
 \end{table}
 
 Table~\ref{tab:scaling} repeats the zero-shot comparison across model sizes. At 0.6B the three
-questions sit near the base rate: the model cannot do the task, whatever it is asked. From 1.7B on,
+questions sit close to the base rate ($0.64$ against $0.563$; $0.52$ against $0.476$): at that size
+the model barely does the task, whatever it is asked. From 1.7B on,
 the pair question is ahead on both benchmarks, and it is the question that improves with size: on
-biodiversity the pair question's lead over the sentence question grows from $+0.041$ (1.7B) to
-$+0.096$, $+0.123$ and $+0.154$ (32B), while the sentence question stops improving at 8B
+biodiversity the pair question's lead over the sentence question grows from $+0.040$ (1.7B) to
+$+0.096$, $+0.123$ and $+0.155$ (32B), while the sentence question stops improving at 8B
 ($0.80$). On BioRED the sentence question stays near its base rate at every size ($0.52$--$0.57$)
 and the pair question reaches $0.80$ from 8B on.
 
@@ -960,9 +970,10 @@ Self-distillation & none & $-0.001$ P, $-0.008$ F1 \\
 6-layer compression & $1.9\times$ CPU throughput & $-0.088$ precision \\
 Corpus signal-matching & none & $-0.059$ AUPRC \\
 Rule-family training data & none & AUPRC $+0.005$ to $-0.037$ \\
+BiomedBERT-large & $+0.013$ dev AUPRC (BioRED pair) & none on test; $3\times$ parameters \\
 \bottomrule
 \end{tabular}
-\caption{Five plausible design choices that measurably do not pay.}
+\caption{Six plausible design choices that measurably do not pay.}
 \label{tab:negative}
 \end{table}
 
@@ -975,6 +986,12 @@ same mechanisms into \emph{training data} --- synthetic negatives for the same-o
 authority classes, and in a second variant for co-listing --- and retrained. The first variant left
 AUPRC unchanged within seed noise and the second cost $0.037$. Mechanisms that are properties of the
 candidate are better answered by a rule than taught to a classifier. Deltas in the first four rows
-were measured under an earlier version of the evaluation and are given as directions.
+were measured under an earlier version of the evaluation and are given as directions. The last row
+is the best of the six recipes of \S\ref{sec:res-ablation} on development data: BiomedBERT-large
+raises the BioRED pair model's development AUPRC from $0.892$ to $0.905$ (three-seed means), but on
+the BC8 test set the pair model scores $0.843 \pm 0.005$ against $0.843 \pm 0.004$, F1 $0.814$
+against $0.817$, EP F1 $67.4 \pm 0.4$ against $67.1 \pm 0.3$, and the sentence-level model $0.741$
+against $0.738$; the pair query's gain is unchanged ($+0.103$ against $+0.105$ AUPRC). It was not
+trained on all biodiversity arms, since its BioRED test result could not change the choice.
 
 \end{document}

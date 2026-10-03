@@ -138,6 +138,11 @@ def main() -> None:
             p, t = ask(a.model, tmpl.format(sent=r.sentence, s1=r.species1, s2=r.species2))
             return p, t, int(t.upper().startswith("YES"))
 
+        # fail fast on a model that does not answer YES/NO with thinking off (the qwen3:4b and
+        # qwen3:30b 2507 re-releases start with prose, so P(YES) would be 0 on every row)
+        probe = [job(r)[1] for r in d.head(8).itertuples(index=False)]
+        if not any(t.split("/")[0].strip().upper().startswith(("YES", "NO")) for t in probe):
+            raise SystemExit(f"{a.model} answers {probe[:3]} instead of YES/NO; not running {form}")
         with ThreadPoolExecutor(a.workers) as ex:
             res = list(ex.map(job, d.itertuples(index=False)))
         o = d.assign(p_yes=[x[0] for x in res], raw=[x[1] for x in res], verdict=[x[2] for x in res])

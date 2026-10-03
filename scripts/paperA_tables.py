@@ -103,6 +103,7 @@ def biodiv(dev, arms=ARMS_BIODIV, sfx=""):
     assert (nt.species1.values == d.species1.values).all(), "n_taxa table misaligned"
     multi = nt.n_taxa.to_numpy() >= 3
     out, S, PRED = {"n": 437, "positives": 246}, {}, {}
+    arms = complete(arms)
 
     for arm, pat in arms.items():
         per = [order_free(REPO / pat.format(s), d, dev) for s in (1, 2, 3)]
@@ -120,7 +121,8 @@ def biodiv(dev, arms=ARMS_BIODIV, sfx=""):
     out["n_le2_taxa"], out["n_ge3_taxa"] = int((~multi).sum()), int(multi.sum())
     out["n_ge3_taxa_positives"] = int(y[multi].sum())
     out["mcnemar" + sfx] = {f"{b}_vs_{a}": dict(zip(("p", "fixes", "breaks"), mcnemar(PRED[a], PRED[b], y)))
-                            for a, b in (("sentence", "pair"), ("sentence", "triple"), ("pair", "triple"))}
+                            for a, b in (("sentence", "pair"), ("sentence", "triple"), ("pair", "triple"))
+                            if a in PRED and b in PRED}
     if not sfx:            # the LLM rows of a suffixed run are refreshed with --llm-only (all saved S_*.npy)
         out["llm"] = llm_rows("biodiv", y, S, multi, blocks)
 
@@ -136,6 +138,8 @@ def biodiv(dev, arms=ARMS_BIODIV, sfx=""):
                              "of_negatives": int((y[m] == 0).sum()),
                              "F1": float(f1_score(y[m], PRED[arm][m], zero_division=0))} for arm in S}
 
+    if "triple" not in PRED:             # a partial --arms large run: the triple-arm analyses wait
+        return out
     # candidate rules on top of the triple arm
     base = PRED["triple"]
     for tag, rules in (("rules7", CR.RULES), ("rules8", CR.RULES_WITH_COLIST)):
@@ -165,6 +169,15 @@ def biodiv(dev, arms=ARMS_BIODIV, sfx=""):
     return out
 
 
+def complete(arms: dict) -> dict:
+    """The arms whose three checkpoints all exist (the base arms always do; a partial run of the
+    large arms scores what has finished and says what it skipped)."""
+    ok = {a: p for a, p in arms.items() if all((REPO / p.format(s) / "student_config.json").exists() for s in (1, 2, 3))}
+    for a in set(arms) - set(ok):
+        print(f"skip {a}: checkpoints missing", file=sys.stderr)
+    return ok
+
+
 def biored(dev, arms=ARMS_BIORED, sfx=""):
     d = pd.read_csv(REPO / "data/benchmarks/biored_bc8/test.csv")
     d = d.rename(columns={"source_species": "species1", "target_species": "species2",
@@ -173,7 +186,7 @@ def biored(dev, arms=ARMS_BIORED, sfx=""):
     y, multi = d.label.to_numpy(), d.n_concepts.to_numpy() >= 3
     out, S, PRED = {"n": int(len(d)), "positives": int(y.sum()),
                     "n_2_concepts": int((~multi).sum()), "n_ge3_concepts": int(multi.sum())}, {}, {}
-    for arm, pat in arms.items():
+    for arm, pat in complete(arms).items():
         mds = [REPO / pat.format(s) for s in (1, 2, 3)]
         per = [order_free(md, d, dev) for md in mds]
         S[arm] = np.mean(per, axis=0)
@@ -187,9 +200,10 @@ def biored(dev, arms=ARMS_BIORED, sfx=""):
                     "auprc_2_concepts_per_seed": [float(ap(y[~multi], p[~multi])) for p in per],
                     "auprc_ge3_concepts_per_seed": [float(ap(y[multi], p[multi])) for p in per]}
         np.save(OUT / f"S_biored_{arm}{sfx}.npy", S[arm])
-    out["mcnemar_pair_vs_sentence" + sfx] = dict(zip(("p", "fixes", "breaks"), mcnemar(PRED["sentence"], PRED["pair"], y)))
+    if "sentence" in PRED and "pair" in PRED:
+        out["mcnemar_pair_vs_sentence" + sfx] = dict(zip(("p", "fixes", "breaks"), mcnemar(PRED["sentence"], PRED["pair"], y)))
     for arm in ("pair_mark", "mark_canon"):
-        if arm in PRED:
+        if arm in PRED and "pair" in PRED:
             out[f"mcnemar_{arm}_vs_pair{sfx}"] = dict(zip(("p", "fixes", "breaks"), mcnemar(PRED["pair"], PRED[arm], y)))
     out["base_rate"] = float(y.mean())
     if not sfx:

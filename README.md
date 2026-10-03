@@ -84,7 +84,7 @@ python3 paperA/fig/make_threshold_figure.py
 
 | Paper | Source |
 |---|---|
-| Controlled comparison on 437 rows (main table), where the gain lives (taxa counts, blocks), operating curves, per-seed appendix table | `tables_biodiv.json`: keys `sentence`, `pair`, `triple`, `mcnemar`, `curve` |
+| Controlled comparison on 437 rows (main table), where the gain lives (taxa counts, blocks), operating curves, per-seed and recall-side appendix sections | `tables_biodiv.json`: keys `sentence`, `pair`, `triple`, `mcnemar`, `curve` |
 | Degrading segment A (ablation) | `tables_biodiv.json`: `ablation` |
 | Candidate rules (body paragraph and appendix table) | `tables_biodiv.json`: `rules7`, `rules8`, `reject50` |
 | BioRED table: AUPRC, F1, 2 vs. >=3 concepts | `tables_biored.json` |
@@ -92,6 +92,7 @@ python3 paperA/fig/make_threshold_figure.py
 | Zero-shot Qwen3 rows (biodiversity and BioRED), and the scaling table by model size (appendix) | `tables_*.json`: `llm` |
 | Threshold figure | `make_threshold_figure.py` (reads `S_biodiv_*.npy`, `tables_biodiv.json` and the benchmark) |
 | Teacher prompts (appendix) | `teacher_label_triples.py`, `llm_baseline.py` |
+| Larger-encoder negative result (encoder paragraph, negative-results appendix) | `tables_biored.json`: `sentence_large`, `pair_large`, `mcnemar_pair_vs_sentence_large`; `biored_ep.json`: same arm names (`paperA_tables.py --bench biored --arms large`) |
 
 The `S_<bench>_<arm>.npy` arrays are the three-checkpoint mean scores, row-aligned with the clean
 benchmark (biodiversity) or with `data/benchmarks/biored_bc8/test.csv` (BioRED). The deployed
