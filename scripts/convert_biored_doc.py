@@ -47,7 +47,7 @@ def mark_all(text: str, spans_a, spans_b) -> str:
     return "".join(out)
 
 
-def rows_for(doc, type_pairs, nlp) -> list[dict]:
+def rows_for(doc, type_pairs, nlp, typed=False) -> list[dict]:
     by_key = {}
     for e in sorted(doc["ents"], key=lambda e: e["start"]):
         by_key.setdefault(concept_key(e), []).append(e)
@@ -65,7 +65,10 @@ def rows_for(doc, type_pairs, nlp) -> list[dict]:
         out.append({"pmid": doc["pmid"],
                     "text": mark_all(doc["text"], [(e["start"], e["end"]) for e in by_key[ka]],
                                      [(e["start"], e["end"]) for e in by_key[kb]]),
-                    "source_species": a["mention"], "interaction_type": "", "target_species": b["mention"],
+                    # --typed puts each concept's BioRED type in the query ("ChemicalEntity: aspirin")
+                    "source_species": f"{a['type']}: {a['mention']}" if typed else a["mention"],
+                    "interaction_type": "",
+                    "target_species": f"{b['type']}: {b['mention']}" if typed else b["mention"],
                     "label": int(related(doc, a, b)), "cid1": ka, "cid2": kb,
                     "type1": a["type"], "type2": b["type"], "n_concepts": len(keys),
                     "co_mentioned": int(bool(sent_sets[ka] & sent_sets[kb]))})
@@ -76,6 +79,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--src", default="data/raw/bioredirect")
     ap.add_argument("--out", default="data/benchmarks/biored_bc8_doc")
+    ap.add_argument("--typed", action="store_true", help="prefix each query entity with its BioRED type")
     a = ap.parse_args()
     import spacy
     nlp = spacy.load("en_core_web_sm", disable=["ner", "lemmatizer"])
@@ -85,7 +89,7 @@ def main() -> None:
     splits = {s: read_pubtator(src / f"bioredirect_{f}.pubtator") for s, f in files.items()}
     type_pairs = relation_type_pairs(splits["train"])
     for s, docs in splits.items():
-        df = pd.DataFrame([r for d in docs for r in rows_for(d, type_pairs, nlp)])
+        df = pd.DataFrame([r for d in docs for r in rows_for(d, type_pairs, nlp, a.typed)])
         df.to_csv(out / f"{s}.csv", index=False)
         print(f"{s:5}: {len(docs)} abstracts -> {len(df):6d} pairs, positive rate {df.label.mean():.3f}, "
               f"co-mentioned {df.co_mentioned.mean():.0%}, positives co-mentioned "

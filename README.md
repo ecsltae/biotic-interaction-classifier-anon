@@ -1,101 +1,98 @@
-# Biotic Interaction Classifier
+# Which Pair Is It About? Pair-Conditioned Verification of Literature-Mined Biotic Interactions
 
-Code and data for "Multi-task BiomedBERT for Biotic Interaction Detection via
-Knowledge Distillation and Multi-task Learning with Named Entity Recognition"
-(submitted for anonymous review). The submission manuscript is
-`manuscript/biotic_interaction_classifier_ARR.tex` (official ACL Author Kit,
-`\usepackage[review]{acl}`); `biotic_interaction_classifier.tex` is an earlier
-non-official-template draft kept for reference.
+Anonymous code release for the submission. It holds the manuscript, the code that trains the
+compared models and computes every table, and the computed outputs (`results/paperA_v2/`), so
+the tables can be checked without retraining.
 
-## System overview
+## Layout
 
-The proposed classifier (`experiments/multitask/model.py`) is a multi-task
-BiomedBERT with two heads sharing one encoder: a binary classification head
-(biotic interaction / no interaction) and a named entity recognition (NER)
-head producing BIO-tagged entity spans (HOST, PATHOGEN, SPECIES, INT). It is
-trained via knowledge distillation from soft probability labels (an ensemble
-teacher), using warm-start initialization from a template-trained BiomedBERT
-encoder. See the manuscript for full architecture and training details.
-
-## Reproducing the paper's results
-
-### 1. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Unpack the training corpus and test set
-
-```bash
-gunzip -k data/training/distillation_44k.csv.gz
-gunzip -k data/training/distillation_soft_labels.csv.gz
-```
-
-The final 500-sentence test set is `data/evaluation/biotic_interaction_test_set.csv`
-(281 positives, 5 sources). It is rebuilt from raw sources (deduplicating two
-near-identical export formats, fixing one internal duplicate) via:
-
-```bash
-python scripts/rebuild_test_set.py
-```
-
-### 3. Train the champion model
-
-```bash
-python experiments/multitask/train.py \
-  --data data/training/distillation_44k.csv \
-  --ner-scheme full_typed --alpha 0.5 --pretrain-ner-epochs 0 --epochs 3 \
-  --encoder <path-to-template-trained-BiomedBERT-checkpoint> \
-  --output-dir models/multitask/champion \
-  --results-dir results/multitask/champion
-```
-
-The warm-start `--encoder` checkpoint is a BiomedBERT model fine-tuned on the
-template-generated training corpus with standard cross-entropy (the
-single-task baseline reported in Table 2 of the paper); see
-`src/models/transformer_classifier.py` for that training script. Trained
-model weights are not included in this repository (file size); retrain from
-the corpus above, or contact the authors after review for the checkpoint.
-
-### 4. Evaluate
-
-```bash
-python scripts/eval_corrected_testset.py --gpu
-```
-
-Reproduces the point metrics, bootstrap confidence intervals, and McNemar
-significance tests reported in Section 3.2 of the paper. Per-source and
-ablation evaluation: `scripts/eval_on_new_testset.py`.
-
-## Repository structure
-
-```
-classifier/
-├── manuscript/              # Paper source (LaTeX), figures, references
-├── experiments/multitask/   # Core architecture: model.py, train.py, data.py, evaluate.py
-├── scripts/
-│   ├── rebuild_test_set.py        # Builds the final 500-sentence test set
-│   ├── eval_corrected_testset.py  # Main evaluation harness (CIs, McNemar)
-│   ├── eval_on_new_testset.py     # Per-source / ablation evaluation
-│   ├── distill_ensemble.py        # Knowledge distillation training
-│   └── teacher_scorer.py          # Ensemble soft-label scoring
-├── src/models/transformer_classifier.py  # Single-task BiomedBERT baseline
-├── data/
-│   ├── training/    # distillation_44k.csv.gz (+ raw soft labels), dataset version history
-│   └── evaluation/  # Final test set + raw per-source files used to build it
-└── results/         # Saved metrics (train_summary.json, eval JSON) per model config
-```
+| Path | What it is |
+|---|---|
+| `paperA/` | manuscript (`paperA.tex`, `references.bib`, ACL style files, compiled `paperA.pdf`) and the figure script |
+| `experiments/multitask/train_student.py` | trains one verifier; `--input-format sentence\|pair\|triple` is the only difference between the compared arms |
+| `scripts/xenc_format.py` | builds the encoder input of each format (passage only; pair + passage; pair + relation + passage) |
+| `scripts/eval_unified.py` | scores a checkpoint on a candidate table (used by the two scripts below) |
+| `scripts/paperA_tables.py` | every number of the results tables, from trained checkpoints |
+| `scripts/biored_ep_eval.py` | BioRED entity-pair F1 (the standard document-level metric) |
+| `scripts/llm_baseline.py` | zero-shot local LLM rows (Ollama), same three formulations as the trained arms |
+| `scripts/teacher_label_triples.py` | the teacher's labelling prompt (also read by `llm_baseline.py` for the triple question) |
+| `scripts/convert_biored_verify.py` | builds the sentence-scope BioRED candidate tables (BC8 protocol) |
+| `scripts/convert_biored_doc.py` | builds the whole-abstract BioRED candidate tables |
+| `scripts/run_biored_bc8.sh`, `scripts/run_biored_bc8_doc.sh` | train the BioRED arms (3 seeds each) |
+| `scripts/candidate_rules.py` | the deterministic candidate rules (Section "Candidate rules" and its appendix) |
+| `scripts/scan_contamination.py` | near-duplicate scan of the benchmark against the training passages (defines the 437 clean rows) |
+| `src/eval/core.py` | the single loader of the 437 clean benchmark rows, used by every script |
+| `results/paperA_v2/` | computed outputs: `tables_biodiv.json`, `tables_biored.json`, `biored_ep.json`, and the per-row ensemble scores `S_*.npy` |
 
 ## Data
 
-- `data/training/distillation_44k.csv.gz`: the 44K-sentence distillation
-  corpus (Qwen3.5-122B binary labels + ensemble soft probability labels).
-  Gzipped to stay under file-size limits; `gunzip` before use.
-- `data/evaluation/biotic_interaction_test_set.csv`: the final 500-sentence
-  test set (5 sources, 281 positives), built by `rebuild_test_set.py` from
-  the raw `.tsv`/`.csv` files alongside it in the same directory.
+* **BioRED.** Public. `convert_biored_verify.py` reads the PubTator files distributed with the
+  BioREDirect release (Lai et al., 2025): `bioredirect_{train_dev,test,bc8_test}.pubtator`
+  (BioRED train+dev, BioRED test, and the BioCreative VIII BioRED-track test set of 400 abstracts).
+  Put them in `data/raw/bioredirect/`.
+* **Biodiversity benchmark and training corpus.** The 449-row benchmark
+  (`data/evaluation/unified_test_set.csv`, of which 437 rows are kept after the contamination scan
+  `results/test_contamination_scan.csv`; per-row taxon counts in
+  `results/paperA_rebuild_2026-09-28/n_taxa_per_row.csv`) and the 48,338-row teacher-labelled
+  training corpus (`data/training/distill/v3_combined_train.csv`) will be released with the paper.
+  They are not part of this anonymous package.
 
-## Contact
+## Environment
 
-[contact details removed for anonymous review]
+Python 3.10; a GPU for training.
+
+```bash
+pip install -r requirements.txt
+python -m spacy download en_core_web_sm
+```
+
+The LLM rows need [Ollama](https://ollama.com) on `localhost:11434` with the Qwen3 models pulled
+(`ollama pull qwen3:32b`, and the smaller sizes for the scaling table).
+
+## Reproducing the results
+
+```bash
+# 1. BioRED candidate tables (sentence scope, BC8 protocol; and whole abstract)
+python3 scripts/convert_biored_verify.py --protocol bc8 --src data/raw/bioredirect --out data/benchmarks/biored_bc8
+python3 scripts/convert_biored_doc.py --src data/raw/bioredirect --out data/benchmarks/biored_bc8_doc
+
+# 2. Train the arms: three seeds per arm, one shared recipe (3 epochs, lr 2e-5, batch 32)
+for fmt in sentence pair triple; do for s in 1 2 3; do
+  python3 experiments/multitask/train_student.py --data data/training/distill/v3_combined_train.csv \
+      --input-format $fmt --seed $s --out models/biodiv/${fmt}_s$s
+done; done
+bash scripts/run_biored_bc8.sh          # BioRED sentence / pair / marker variants
+bash scripts/run_biored_bc8_doc.sh      # BioRED whole-abstract pair arm
+
+# 3. Tables (edit ARMS_BIODIV / ARMS_BIORED at the top of paperA_tables.py if your
+#    checkpoint directories differ)
+python3 scripts/paperA_tables.py --bench biodiv     # -> results/paperA_v2/tables_biodiv.json
+python3 scripts/paperA_tables.py --bench biored     # -> results/paperA_v2/tables_biored.json
+python3 scripts/biored_ep_eval.py --src data/raw/bioredirect   # -> results/paperA_v2/biored_ep.json
+
+# 4. Zero-shot LLM rows, then refresh only the LLM part of the tables
+python3 scripts/llm_baseline.py --bench biodiv --model qwen3:32b
+python3 scripts/llm_baseline.py --bench biored --model qwen3:32b --n 3000
+python3 scripts/paperA_tables.py --bench biodiv --llm-only
+
+# 5. Figure
+python3 paperA/fig/make_threshold_figure.py
+```
+
+## Which output feeds which table
+
+| Paper | Source |
+|---|---|
+| Controlled comparison on 437 rows (main table), where the gain lives (taxa counts, blocks), operating curves, per-seed appendix table | `tables_biodiv.json`: keys `sentence`, `pair`, `triple`, `mcnemar`, `curve` |
+| Degrading segment A (ablation) | `tables_biodiv.json`: `ablation` |
+| Candidate rules (body paragraph and appendix table) | `tables_biodiv.json`: `rules7`, `rules8`, `reject50` |
+| BioRED table: AUPRC, F1, 2 vs. >=3 concepts | `tables_biored.json` |
+| BioRED entity-pair F1 | `biored_ep.json` |
+| Zero-shot Qwen3 rows (biodiversity and BioRED) | `tables_*.json`: `llm` |
+| Threshold figure | `make_threshold_figure.py` (reads `S_biodiv_*.npy`, `tables_biodiv.json` and the benchmark) |
+| Teacher prompts (appendix) | `teacher_label_triples.py`, `llm_baseline.py` |
+
+The `S_<bench>_<arm>.npy` arrays are the three-checkpoint mean scores, row-aligned with the clean
+benchmark (biodiversity) or with `data/benchmarks/biored_bc8/test.csv` (BioRED). The deployed
+model's direction table uses a checkpoint and expert direction labels that will be released with
+the paper.

@@ -26,10 +26,12 @@ class DS(Dataset):
     examples here average ~55 tokens against a 256 limit, so this is most of the
     forward pass.
     """
-    def __init__(self, df, tok, max_len=256, fmt="triple"):
+    def __init__(self, df, tok, max_len=256, fmt="triple", soft_col=None):
         self.q, self.p = xenc_format.build_many(
             fmt, df.source_species, df.interaction_type, df.target_species, df.text.astype(str))
         self.y = df.label.astype(int).tolist()
+        # soft targets (the teacher's P(yes)) when distilling from probabilities; dev keeps hard labels
+        self.t = df[soft_col].astype(float).tolist() if soft_col and soft_col in df else None
         self.tok, self.ml = tok, max_len
     def __len__(self): return len(self.y)
     def __getitem__(self, i):
@@ -37,12 +39,14 @@ class DS(Dataset):
             e = self.tok(self.q[i], truncation=True, max_length=self.ml)
         else:
             e = self.tok(self.q[i], self.p[i], truncation="only_second", max_length=self.ml)
-        return dict(e) | {"labels": self.y[i]}
+        return dict(e) | {"labels": self.y[i]} | ({"soft": self.t[i]} if self.t is not None else {})
 
 def collate(tok):
     def f(batch):
         y = torch.tensor([b.pop("labels") for b in batch])
-        return dict(tok.pad(batch, padding=True, return_tensors="pt")) | {"labels": y}
+        soft = [b.pop("soft") for b in batch if "soft" in b]
+        out = dict(tok.pad(batch, padding=True, return_tensors="pt")) | {"labels": y}
+        return out | ({"soft": torch.tensor(soft, dtype=torch.float)} if soft else {})
     return f
 
 def main():
@@ -64,6 +68,8 @@ def main():
                          "0 = off. Same gradient, less peak memory (the box is shared).")
     ap.add_argument("--pos-weight", type=float, default=None,
                     help="weight on the positive class in CE loss (control arm); default None = unweighted")
+    ap.add_argument("--soft-col", default=None,
+                    help="column of soft targets in [0,1] (teacher P(yes)); trains with soft cross-entropy")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
 
@@ -87,7 +93,7 @@ def main():
     tok = AutoTokenizer.from_pretrained(a.encoder)
     model = AutoModelForSequenceClassification.from_pretrained(a.encoder, num_labels=2).to(dev)
     cf = collate(tok)
-    tl = DataLoader(DS(tr, tok, a.max_len, a.input_format), batch_size=a.batch_size, shuffle=True,
+    tl = DataLoader(DS(tr, tok, a.max_len, a.input_format, a.soft_col), batch_size=a.batch_size, shuffle=True,
                     num_workers=2, collate_fn=cf)
     vl = DataLoader(DS(va, tok, a.max_len, a.input_format), batch_size=a.batch_size*2,
                     num_workers=2, collate_fn=cf)
@@ -108,7 +114,12 @@ def main():
             for i in range(0, n, mb):                      # exact same gradient as one pass
                 c = {k: v[i:i+mb] for k, v in b.items()}
                 w = c["labels"].shape[0]/n
-                if cw is None:
+                t = c.pop("soft", None)
+                if t is not None:                          # soft cross-entropy against P(yes)
+                    c.pop("labels")
+                    lp = torch.log_softmax(model(**c).logits.float(), -1)
+                    loss = -(t*lp[:, 1] + (1-t)*lp[:, 0]).mean()*w
+                elif cw is None:
                     loss = model(**c).loss*w
                 else:
                     y = c.pop("labels")
@@ -140,7 +151,7 @@ def main():
         "threshold_dev": t, "best_dev_auprc": best, "seed": a.seed, "epochs": a.epochs,
         "input_format": a.input_format, "encoder": a.encoder, "max_len": a.max_len, "lr": a.lr,
         "micro_batch": a.micro_batch,
-        "data": a.data, "dev_data": a.dev_data, "train_pos_rate": float(df.label.mean()), "pos_weight": a.pos_weight,
+        "data": a.data, "dev_data": a.dev_data, "soft_col": a.soft_col, "train_pos_rate": float(df.label.mean()), "pos_weight": a.pos_weight,
         "git": subprocess.run(["git","describe","--always","--dirty"],cwd=REPO,capture_output=True,text=True).stdout.strip(),
         "history": hist}, indent=2))
     print(f"saved {out}  dev_t={t:.3f}  dev AUPRC {best:.4f}", flush=True)

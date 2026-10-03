@@ -4,7 +4,7 @@
 set -u
 cd "$(dirname "$0")/.."
 source "${VENV:-../MPvenv}/bin/activate"     # the shared environment beside classifier/
-D=data/benchmarks/biored_bc8
+D=data/benchmarks/biored_bc8; mkdir -p logs/biored_bc8
 for fmt in ${FORMATS:-sentence pair pair_mark mark_canon}; do
   for s in 1 2 3; do
     out=models/biored_bc8/${fmt}_s${s}

@@ -3,7 +3,7 @@
 set -u
 cd "$(dirname "$0")/.."
 source "${VENV:-../MPvenv}/bin/activate"     # the shared environment beside classifier/
-D=data/benchmarks/biored_bc8_doc
+D=data/benchmarks/biored_bc8_doc; mkdir -p logs/biored_bc8
 for s in 1 2 3; do
   out=models/biored_bc8_doc/pair_s${s}
   [ -f $out/student_config.json ] && { echo "skip $out"; continue; }
