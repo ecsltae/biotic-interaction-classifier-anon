@@ -1,0 +1,24 @@
+% Table 1, revised. Needs \usepackage{booktabs} and \usepackage{graphicx} in the preamble.
+% Changes: an "Accept all" floor row, significance marks in place of the McNemar counts
+% (those stay in Sections 4.1-4.2), and a caption about half as long.
+\providecommand{\sd}[1]{\textsubscript{$\pm$#1}}
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3.6pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+ & \multicolumn{2}{c}{Biodiversity (437)} & \multicolumn{3}{c}{BioRED (16,606)} \\
+\cmidrule(lr){2-3}\cmidrule(l){4-6}
+Model & AUPRC & F1 & AUPRC & F1 & EP F1 \\
+\midrule
+Accept all         & 0.574 & 0.730 & 0.463 & 0.633 & -- \\
+Sentence-level     & 0.867\sd{.006} & 0.790 & 0.738\sd{.004} & 0.718 & 57.5 \\
+Pair-conditioned   & 0.942\sd{.007} & \textbf{0.882}$^\dagger$ & \textbf{0.843}\sd{.004} & \textbf{0.817}$^\dagger$ & \textbf{67.1} \\
+Triple-conditioned & \textbf{0.945}\sd{.005} & 0.867$^\dagger$ & -- & -- & -- \\
+\bottomrule
+\end{tabular}}
+\caption{Within each benchmark, all models share one encoder and one training corpus; only the input differs. AUPRC: mean $\pm$ s.d.\ over three seeds. F1: three-checkpoint ensemble at block-held-out thresholds (biodiversity) or the pre-specified threshold (BioRED). EP F1: BioRED's document-level entity-pair F1 (\%), seed mean. Accept all gives the base rate. $^\dagger$McNemar $p<10^{-4}$ against the sentence-level model; pair- against triple-conditioned, $p=0.26$. BioRED has no relation term, hence no triple-conditioned model.}
+\label{tab:main}
+\end{table}

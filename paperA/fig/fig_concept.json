@@ -1,0 +1,135 @@
+{
+  "figure": "fig_concept.pdf",
+  "latex_label": "fig:concept",
+  "generator": "make_concept_figure.py",
+  "benchmark": {
+    "labels": "current",
+    "sha256": "c17cc4bec6ae6c04d0b3eb923167df4f6e3e874ea81833116200a10a0f9dc856",
+    "n": 437,
+    "positives": 251
+  },
+  "item": {
+    "clean_index": 351,
+    "source": "test299",
+    "sentence": "The Lone Star tick, Amblyomma americanum, transmits several bacterial pathogens including species of Anaplasma and Ehrlichia.",
+    "species1": "Anaplasma",
+    "relation": "transmits",
+    "species2": "Ehrlichia",
+    "label": 0
+  },
+  "values": {
+    "S_biodiv_sentence.npy[351]": 0.42367684841156006,
+    "S_biodiv_pair.npy[351]": 0.007324810605496168,
+    "S_biodiv_triple.npy[351]": 0.0059976414777338505,
+    "sentence.thresholds.test299": 0.04,
+    "pair.thresholds.test299": 0.15000000000000002,
+    "triple.thresholds.test299": 0.09999999999999999
+  },
+  "decisions": {
+    "sentence": {
+      "model": "sentence-level",
+      "score": 0.424,
+      "threshold": 0.04,
+      "rule": "accept if score >= threshold (block-held-out threshold of the item's block; three-checkpoint ensemble)",
+      "decision": "accept"
+    },
+    "pair": {
+      "model": "pair-conditioned",
+      "score": 0.007,
+      "threshold": 0.15,
+      "rule": "accept if score >= threshold (block-held-out threshold of the item's block; three-checkpoint ensemble)",
+      "decision": "reject"
+    },
+    "triple": {
+      "model": "triple-conditioned",
+      "score": 0.006,
+      "threshold": 0.1,
+      "rule": "accept if score >= threshold (block-held-out threshold of the item's block; three-checkpoint ensemble)",
+      "decision": "reject"
+    }
+  },
+  "possible_pairs": [
+    {
+      "row": 1,
+      "pair": "A. americanum, Anaplasma",
+      "benchmark_item": false,
+      "sentence_question": "yes",
+      "pair_question": "yes",
+      "correct": "yes",
+      "model_scores": null
+    },
+    {
+      "row": 2,
+      "pair": "A. americanum, Ehrlichia",
+      "benchmark_item": false,
+      "sentence_question": "yes",
+      "pair_question": "yes",
+      "correct": "yes",
+      "model_scores": null
+    },
+    {
+      "row": 3,
+      "pair": "Anaplasma, Ehrlichia",
+      "benchmark_item": true,
+      "sentence_question": "yes",
+      "pair_question": "no",
+      "correct": "no",
+      "model_scores": {
+        "sentence": 0.424,
+        "pair": 0.007,
+        "triple": 0.006
+      }
+    }
+  ],
+  "row_alignment_check": {
+    "sentence": {
+      "F1": 0.7902,
+      "accepts": 278
+    },
+    "pair": {
+      "F1": 0.8824,
+      "accepts": 259
+    },
+    "triple": {
+      "F1": 0.8665,
+      "accepts": 266
+    }
+  },
+  "font": {
+    "family": "Liberation Serif",
+    "files": {
+      "normal": "LiberationSerif-Regular.ttf",
+      "italic": "LiberationSerif-Italic.ttf",
+      "bold": "LiberationSerif-Bold.ttf"
+    }
+  },
+  "size_in": [
+    3.03,
+    2.7
+  ],
+  "layout_in": {
+    "passage_panel": [
+      2.166,
+      2.67
+    ],
+    "rule": 1.68,
+    "input_rule": 0.663,
+    "bottom_margin": 0.038,
+    "rows": [
+      1.52,
+      1.292,
+      1.064
+    ],
+    "inputs": [
+      0.528,
+      0.323,
+      0.118
+    ],
+    "input_strip_right": 2.99,
+    "columns": {
+      "sentence": 1.557,
+      "pair": 2.407,
+      "correct": 2.893
+    }
+  }
+}

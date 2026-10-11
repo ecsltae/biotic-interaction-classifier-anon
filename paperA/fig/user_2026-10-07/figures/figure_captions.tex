@@ -1,0 +1,14 @@
+% Captions to go with the revised figures and table.
+% Swap TAXONERD-KEY and QWEN-KEY for your citation keys, and \textsc{Test}299 for your macro.
+
+% Figure 1 (figure unchanged; shorter caption)
+\caption{One passage, several candidate pairs. Retrieval proposes a candidate when a passage names two organisms near an interaction word (bold). The sentence question gets one answer for the whole passage, so even a perfect answer accepts the third pair, two bacterial genera merely listed together. The third pair is a real benchmark item (\textsc{Test}299, graded negative) that the sentence-level model accepts and both conditioned models reject at their block-held-out thresholds; the first two pairs are illustrative. Bottom: model inputs.}
+
+% Figure 2 (python paper_figures.py fig2 --scores rows.csv)
+\caption{Operating curves on the 437 expert-graded candidates (three-checkpoint ensembles). (a) Precision against recall. Markers are the operating points of Table~\ref{tab:main}; their thresholds are fitted per block, so they can sit slightly off the pooled curve. Dotted line: accepting every candidate. (b) F1 against the share of candidates accepted, which compares the models at equal review workload whatever their calibration. Values at six thresholds: Appendix~C.}
+
+% Figure 3 (fig3_gain_by_taxa.pdf)
+\caption{AUPRC by the number of entities the passage names (three-checkpoint ensembles). Biodiversity: distinct taxa that TaxoNERD~\citep{TAXONERD-KEY} finds in the passage; an argument ``is not a taxon'' when TaxoNERD does not recognise it there. BioRED: gold-annotated concepts in the sentence; BioRED has no relation term, so there is no triple-conditioned model. Triple-conditioned markers sit just below their row so they do not hide the pair-conditioned ones. Grey bars and the $\Delta$ column give the gain from adding the pair (pair-conditioned minus sentence-level). Exact values: Appendices~C and~D.}
+
+% Figure 4 (current figure; caption with the suggested changes)
+\caption{Zero-shot Qwen models~\citep{QWEN-KEY} asked the sentence question (dashed, open squares) or the pair question (solid, filled circles) on (a) the 437 expert-graded candidates and (b) a 3,000-candidate BioRED sample. Dotted: the trained 110M models on the same rows (three-checkpoint ensembles); grey: base rate. The x-axis spaces model sizes evenly. From 1.7B on, the pair question leads at every size, while answers to the sentence question change little with scale. $^*$Mixture of experts, placed by total size; the 32B model is the teacher. $^\dagger$Qwen3.5-122B-A10B, a later release, scored on the first 1,000 BioRED candidates (base rate 0.442; trained models 0.714 and 0.841). Asked the triple question (biodiversity only), the models match or exceed the pair question (Appendix~E).}

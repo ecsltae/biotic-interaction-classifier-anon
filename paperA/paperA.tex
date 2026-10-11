@@ -1,0 +1,1226 @@
+% ACL Rolling Review submission: official ACL Author Kit.
+% \usepackage[review]{acl} for anonymous review (current).
+% Switch to \usepackage{acl} for the camera-ready.
+\documentclass[11pt]{article}
+\PassOptionsToPackage{hyphens}{url}   % let long URLs break at hyphens
+\usepackage[review]{acl}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{microtype}
+
+% Name of the 437-row benchmark; renaming it is this one edit.
+\newcommand{\bench}{\mbox{\textsc{TaxaPairs}}}
+
+\title{Pair-Conditioned Verification of Literature-Mined Taxa Interactions}
+
+\author{Anonymous ACL submission}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Taxa interaction databases (who eats, infects or pollinates whom) are partly built by mining the
+literature. Candidates are proposed when a passage names two taxa near an interaction term, and the
+obvious filter asks whether the passage describes an interaction. A passage naming several taxa may
+support only some of its pairs, yet this filter gives them all the same answer. In our benchmark,
+passages naming three or more taxa hold 62\% of the interacting pairs. Keeping a 110M-parameter
+encoder and its LLM-labelled training data fixed, we vary the input: the passage alone, the passage
+with the candidate pair, or the passage with the pair and its interaction term. On 437 expert-graded
+candidates, adding the pair raises the area under the precision-recall curve (AUPRC) from 0.867 to
+0.942, and the interaction term adds no significant further gain. The gain is largest on passages
+naming three or more taxa. It replicates on the public BioRED corpus and in zero-shot Qwen models
+from 1.7B to 122B parameters, whose answers improve with size much more when asked about the pair.
+Asked only about the passage, the 32B model that labelled our training data ranks candidates below
+the 110M encoder given the pair.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+Databases such as GloBI \citep{poelen2014global} record which taxa eat, infect, parasitise or
+pollinate which, and like many biomedical databases \citep{hirschman2012biocuration,lee2018scaling}
+they are populated in part by text mining \citep{dimitrova2020semantic}. A retrieval system proposes
+candidate triples $(s_1, r, s_2)$, two organisms and an interaction term, together with the passage
+that allegedly supports them, and something must decide which candidates a curator should
+review. A natural choice is a sentence-level classifier that reads the passage and decides whether it describes a biotic interaction.
+
+\begin{figure}[t]\centering
+\includegraphics[width=\columnwidth]{fig/fig_concept.pdf}
+\caption{One passage, several candidate pairs. Retrieval proposes a candidate when a passage names two organisms near an interaction word (bold). The sentence question gets one answer for the whole passage, so even a perfect answer accepts the third pair, two bacterial genera merely listed together. The third pair is a real benchmark item (\textsc{Test299}, graded negative) that the sentence-level model accepts and both conditioned models reject at their block-held-out thresholds; the first two pairs are illustrative. Bottom: model inputs.}
+\label{fig:concept}
+\end{figure}
+
+This classifier gives one answer per passage, whereas co-occurrence retrieval proposes candidates pair by pair: a
+passage naming two taxa near an interaction term yields a candidate whether or not it asserts that
+interaction between those two. Every candidate therefore already contains the wording a sentence-level classifier responds to: in the retrieval pool we study
+(\S\ref{sec:setting}), all $175{,}588$ candidates carry an interaction term, and a lexical scan for
+GloBI interaction vocabulary fires on $99.83\%$ of their passages. The decision that matters is narrower: does the passage assert an interaction between these two taxa? A passage that
+names several organisms can support one pair and not another, and a classifier that sees only the
+passage gives the same answer whichever pair the candidate names; even a perfect answer to its
+question accepts the unsupported pair (Figure~\ref{fig:concept}).
+
+\citet{ruch2024biotxplorer}, who built the retrieval system, graded 100
+random BiotXplorer triples, found that the system identified the interacting taxa with a
+precision of 31\%, and named the main cause of error: ``instances where passages listed multiple
+species, which can be automatically filtered out.'' On our benchmark (\bench{}, \S\ref{sec:benchmark}), passages naming three or more
+taxa hold 156 of the 251 interacting pairs (62\%), so filtering them out would discard most of what
+the pipeline exists to find. We keep those passages and judge each candidate by its pair.
+
+To test this, we train the same 110M-parameter encoder three times on the same
+corpus, labelled by a 32B language model, reading the passage alone (\emph{sentence-level}), the passage
+with the candidate pair (\emph{pair-conditioned}), or the passage with the whole candidate triple
+(\emph{triple-conditioned}), and compare them on 437 expert-graded candidates. Everything except the input is held fixed. Telling the model which pair it is judging raises the area under the
+precision-recall curve (AUPRC, which summarises precision over all recall levels; a random ranking
+scores the share of positives) from $0.867$ to $0.942$ and F1 from $0.790$ to $0.882$ (McNemar
+$p = 3.8\times10^{-7}$), and at equal review workload keeps F1 higher at every share of candidates accepted from 4\% to 89\% (Figure~\ref{fig:curves}b); adding the relation term
+gives no significant further gain (\S\ref{sec:res-main}). On BioRED \citep{luo2022biored}, a public biomedical corpus, the same comparison raises
+AUPRC from $0.738$ to $0.843$ and entity-pair F1 from $57.5$ to $67.1$, with the gain where the
+argument predicts: absent on sentences that name only two entities, large on sentences that name
+more. Zero-shot Qwen models from 1.7B to 122B parameters show the same gap, and the verifier runs
+at 32 candidates per second on a CPU.
+
+\paragraph{Contributions.}
+\begin{itemize}\itemsep1pt\parskip0pt\topsep2pt
+\item A controlled comparison of sentence-level, pair-conditioned and triple-conditioned
+      verification on one encoder and one corpus, replicated on a public benchmark and in zero-shot
+      Qwen language models from 1.7B to 122B parameters, with the gain located where the argument
+      predicts (\S\ref{sec:results}).
+\item An account of what the pair query contributes, namely disambiguation between the organisms a passage
+      names and a check on candidates whose arguments are not organisms, and a bound showing that
+      checking a triple's components separately cannot reach the largest error class
+      (\S\ref{sec:where}, \S\ref{sec:decomp}).
+\end{itemize}
+We also give operating curves for choosing a threshold and a practical configuration with
+candidate rules, a four-way direction label, CPU throughput and escalation to a zero-shot LLM
+(\S\ref{sec:discussion}; Appendices~\ref{app:rules}--\ref{app:cascade}), and six negative results
+(Appendix~\ref{sec:negative}).%
+% ANONYMOUS LINK: replace XXXX with the anonymous.4open.science repository ID
+% (results/overnight_2026-10-03/ANONYMOUS_4OPEN_SCIENCE.md); camera-ready: the public repository.
+\footnote{Code: \url{https://anonymous.4open.science/r/XXXX}.}
+
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Partial-input baselines.}
+That a classifier can score well by exploiting how its data were assembled is well established in
+NLP. Partial-input baselines recover much of the label from the hypothesis alone in natural language
+inference
+\citep{gururangan-etal-2018-annotation,poliak-etal-2018-hypothesis} and from the passage alone in
+reading comprehension \citep{kaushik-lipton-2018-much}, and such rules hold in distribution while
+failing under deployment \citep{geirhos-etal-2020-shortcut,du-etal-2024-shortcut}; the closest
+task-level precedent is fact verification \citep{thorne2018fever}, where a claim-only classifier
+matches evidence-aware models because of how the corpus was built
+\citep{schuster-etal-2019-towards}. The sentence-level filter of \S\ref{sec:intro} is a
+partial-input model in exactly this sense, except that the missing input is the query the pipeline
+itself issued rather than an annotator artefact
+\citep{wiegand-etal-2019-detection,parmar-etal-2023-dont}. As \citet{feng-etal-2019-misleading}
+caution, our claims are limited to the models and corpora we study.
+
+\paragraph{Entity pairs in relation extraction.}
+Distant supervision assumes that a sentence containing two related entities expresses the relation
+\citep{mintz2009distant}, and its standard relaxation exists because it does not
+\citep{riedel2010modeling}. Since TACRED an instance has been the triple (sentence, $e_1$, $e_2$)
+rather than the sentence \citep{zhang2017position}, and how the pair is injected into the encoder
+changes F1 by several points \citep{soares2019matching,wu2019enriching,zhou2022improved}.
+\citet{rosenman2020exposing} already name our failure, as an ``event heuristic'' that classifies on
+(sentence, relation) while ignoring the arguments.  Our contribution is a controlled measurement of its effect in a verification setting built by co-occurrence
+retrieval, replicated on BioRED and in zero-shot Qwen models and located where the argument predicts,
+and a bound on component-wise remedies. The entity-type shortcut usually invoked
+for such errors \citep{peng2020learning,mtumbuka2024entity} is unavailable here, since both slots
+are filled from one inventory of taxon surface forms. Error attribution across pipeline stages is
+standard and easy to get wrong \citep{taille-etal-2020-lets,ai2023endtoend}.
+
+\paragraph{Conditioning on the query.}
+Casting a relation as a question about a named entity \citep{levy2017zero}, or as an entailment
+hypothesis verbalising the relation between two of them \citep{obamuyide2018zero,sainz2021label},
+is the reformulation our input format instantiates, and the resulting decision (does this passage
+support this specific claim?) has the shape of scientific claim verification
+\citep{wadden2020fact}, and of validating a knowledge-graph triple against text
+\citep{lehmann2012defacto}, except that those systems retrieve evidence for a given triple, while
+here retrieval fixes the passage. Distilling a large model's judgments into a small student is
+standard \citep{west2022symbolic,gekhman2023trueteacher}. Selective classification thresholds a score
+instead of issuing a verdict \citep{geifman2017selective}, which is how extraction is made useful
+to human abstractors \citep{swaminathan2024selective}.
+
+\paragraph{Text mining for interaction databases.}
+Judging an extracted fact before it reaches a curator is an old idea
+\citep{rodriguezesteban2006imitating}, as is evaluating such tools by whether they help the curator
+\citep{hirschman2012biocuration,britan2018nexta5,lee2018scaling}. \citet{cuzick2023interspecies},
+independently, take the interacting pair rather than the passage as the annotation unit, the unit
+our pair-binding error class (\S\ref{sec:errors}) isolates. Gold corpora for biodiversity text
+annotate entities and the relations between them, such as microorganisms with their habitats and
+phenotypes \citep{bossy2019bacteria} or organisms with environments, processes and qualities
+\citep{abdelmageed2022biodivnere}; they serve to train and score extraction from text, whereas our
+task is to verify candidates that retrieval has already proposed. Large language models mine ecological text
+\citep{farrell2024landscape,dsouza2025mining} and extract interactions at scale
+\citep{keck2025extracting,zou2026llm}; \citet{zou2026llm} standardise names and categories post
+hoc, with no step that checks each extraction against its text. We are not aware of published work
+that verifies literature-mined biotic-interaction triples against their source passage before
+ingestion.
+
+\section{Method}
+\label{sec:method}
+
+\subsection{Candidates and task definition}
+\label{sec:setting}
+
+BiotXplorer \citep{ruch2024biotxplorer} proposes candidate biotic-interaction triples from the
+literature indexed by SIB Literature Services \citep{gobeill2020sibils}. For each passage it matches
+taxon surface forms against a taxonomy and interaction surface forms against a vocabulary derived
+from the Relation Ontology, and emits candidate $(s_1, r, s_2)$ triples with the passage, the matched
+surface strings and their canonical forms. We use it only as a source of candidates: no component of
+it is a baseline in this paper. The pool we study has $175{,}588$ candidate rows over $165{,}325$
+distinct passages and $115{,}404$ distinct triple keys. Canonical strings often differ from what
+the passage says, so we query with the surface form, which is what the model can see. The
+decision to make is whether the passage asserts an interaction between the candidate's two
+organisms, in either direction (\S\ref{sec:protocol}).
+
+\subsection{Training data and models}
+\label{sec:verifier}
+
+\paragraph{The teacher.}
+Labels come from a locally hosted 32B open-weight instruction model \citep{qwen2025technical},
+prompted zero-shot at temperature 0 (prompts in Appendix~\ref{app:prompts}) and asked, per
+candidate, whether the passage supports this triple. Its labels therefore vary across
+candidates that share a passage. Against 150 expert-graded items its mislabel rate is
+$22/150 = 14.7\%$ (Clopper--Pearson $[9.4\%, 21.4\%]$; 10 false positives, 12 false negatives).
+
+\paragraph{The corpus.}
+48{,}338 teacher-labelled rows, $0.343$ positive, drawn from the same retrieval pool as the benchmark
+(disjoint passages): a 20{,}000-row base sample, 16{,}546 \emph{contrast} rows, in which one passage
+and its pair recur with different relation terms (on 2{,}017 passages with labels that disagree),
+6{,}201 actively sampled rows, and 5{,}591 rows with the candidate's argument order reversed.
+
+\paragraph{Models and inputs.}
+All three are cross-encoders on BiomedBERT-base \citep{gu2021domain} (110M parameters), distilled
+from the teacher's labels \citep{bucilua2006model,hinton2015distilling} with the same recipe
+(Appendix~\ref{app:artifacts}), keeping the checkpoint with the best development AUPRC on a 10\%
+development split grouped by taxon pair so that no pair spans training and development. Three seeds
+each; one run takes about four minutes on a single A100. They differ only in their input.
+The \textbf{sentence-level} model reads the passage alone. It is the simplest formulation, and on rows that share a passage it is shown the same input with different
+labels, which it cannot fit. The \textbf{pair-conditioned} model reads the two candidate taxa,
+$s_1$ \texttt{[SEP]} $s_2$, as segment~A and the passage as segment~B
+\citep{nogueira2019passage}. The \textbf{triple-conditioned} model reads the whole candidate,
+$s_1$ \texttt{[SEP]} $r$ \texttt{[SEP]} $s_2$. Comparing the three separates the effect of the pair from that of the relation term.
+
+\subsection{An expert-graded benchmark}
+\label{sec:benchmark}
+
+Our benchmark, \bench{}, has 437 rows, 251 positive, in three blocks of different provenance; we report every
+block as well as the pooled figures, since pooling alone hides their disagreement (\S\ref{sec:where},
+Appendix~\ref{app:where}). \textsc{Biotx100} consists of retrieved candidates, each with one passage chosen
+by retrieval, expert-graded on four axes: whether each taxon surface form was correctly resolved,
+whether the relation was correct, and whether the whole triple is supported by its passage. Half
+were drawn from pairs already recorded in GloBI and half at random, and after removing three
+training duplicates it contributes 97 rows: 50 GloBI-matched with 43 positive, 47 random with 33
+positive.  \textsc{Reject50} consists of candidates an earlier filter rejected, expert-graded for the ones it should have kept: 41 clean rows, 11
+positive. It is the paper's recall-side instrument (Appendix~\ref{sec:recall}). \textsc{Test299} is
+299 expert-graded pair-level items, $0.548$ positive, and is where passages most often name several
+taxa.
+
+The blocks do not carry the same gold: \textsc{Biotx100} alone is graded at the level of the whole
+triple, while \textsc{Test299} was expert-graded at the pair level and its stored relation term was
+attached by retrieval. We therefore evaluate everywhere at the level all three share (``do these two taxa interact in this passage?''), and use the triple-level grades only to diagnose
+(\S\ref{sec:decomp}). This can understate any benefit of triple conditioning, since a candidate with the
+right pair and the wrong relation counts as correct.
+
+One caveat applies: we scored roughly a hundred model configurations on this benchmark during development, so the recipes compared here were chosen with it in view; we expect the controlled comparison of \S\ref{sec:results} to be the least affected.
+
+\subsection{Replication setting: BioRED}
+\label{sec:biored-setup}
+
+\bench{} is ours, built and graded by three of the authors. To test the claim
+where anyone can check it, we rebuild the same setting on BioRED \citep{luo2022biored}, a public
+corpus of PubMed abstracts with expert-annotated entities and relations. Candidates are generated
+by co-occurrence: every pair of distinct annotated concepts co-mentioned in one sentence, restricted
+to the eight entity-type pairs that carry relations in training, with the sentence as passage. A candidate is positive when BioRED relates
+the two concepts anywhere in the abstract, a document-level label whose noise every model shares.
+We follow the protocol of \citet{lai2025bioredirect}: models train on the 500 abstracts of BioRED's
+training and development splits (15{,}640 candidates), select their epoch and threshold on its 100
+test abstracts, and are scored on the 400 abstracts of the BioCreative VIII test set
+\citep{islamaj2024overview}. BioRED has no retrieved relation term, so only the sentence-level and
+pair-conditioned formulations are compared, trained with the recipe of \S\ref{sec:verifier}.
+
+\subsection{Evaluation protocol}
+\label{sec:protocol}
+
+The threshold policy is fixed in advance. A model's reported operating point is either
+\textbf{pre-specified}, chosen on its own training-development split and never on the benchmark, or
+\textbf{block-held-out}: fitted on two of the three source blocks and applied to the third, so that
+every row is scored by a threshold that never saw it and every row is used. Comparisons between
+models use the same policy for both. Intervals are Clopper--Pearson; McNemar tests
+\citep{mcnemar1947note} carry a continuity correction. With three seeds we report either the
+per-seed mean and standard deviation or a three-checkpoint ensemble, which averages the checkpoints'
+probabilities. The benchmark ships an \texttt{in\_train} flag on 9 rows; a 5-gram Jaccard scan
+against all 48{,}338 training rows finds 3 more at Jaccard $1.000$, all in \textsc{Biotx100}. All 12 are
+excluded throughout.
+
+The gold is pair-level and therefore order-free, so a model that reads the candidate in order is
+scored as the higher of its two scores over the two argument orders, that is, the probability that
+the pair interacts in at least one direction. Otherwise a model would be penalised for rejecting a
+correctly paired candidate whose stated relation runs backwards, which the gold does not count as an
+error.
+
+\section{Results}
+\label{sec:results}
+
+\providecommand{\sd}[1]{\textsubscript{$\pm$#1}}
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3.6pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+ & \multicolumn{2}{c}{\bench{} (437)} & \multicolumn{3}{c}{BioRED (16,606)} \\
+\cmidrule(lr){2-3}\cmidrule(l){4-6}
+Model & AUPRC & F1 & AUPRC & F1 & EP F1 \\
+\midrule
+Accept all         & 0.574 & 0.730 & 0.463 & 0.633 & -- \\
+Sentence-level     & 0.867\sd{.006} & 0.790 & 0.738\sd{.004} & 0.718 & 57.5 \\
+Pair-conditioned   & 0.942\sd{.007} & \textbf{0.882}$^\dagger$ & \textbf{0.843}\sd{.004} & \textbf{0.817}$^\dagger$ & \textbf{67.1} \\
+Triple-conditioned & \textbf{0.945}\sd{.005} & 0.867$^\dagger$ & -- & -- & -- \\
+\bottomrule
+\end{tabular}}
+\caption{Within each benchmark, all models share one encoder and one training corpus; only the input differs. AUPRC: mean $\pm$ s.d.\ over three seeds. F1: three-checkpoint ensemble at block-held-out thresholds (\bench{}) or the pre-specified threshold (BioRED). EP F1: BioRED's document-level entity-pair F1 (\%), seed mean. Accept all gives the base rate. $^\dagger$McNemar $p<10^{-4}$ against the sentence-level model; pair- against triple-conditioned, $p=0.26$. BioRED has no relation term, hence no triple-conditioned model. Per-seed values (\bench{}): Appendix~\ref{app:seeds}.}
+\label{tab:main}
+\end{table}
+
+\subsection{Main results}
+\label{sec:res-main}
+
+\begin{figure}[t]\centering
+\includegraphics[width=\columnwidth]{fig/fig2_operating_curves.pdf}
+\caption{Operating curves on the 437 expert-graded candidates of \bench{} (three-checkpoint ensembles). (a) Precision against recall. Markers are the operating points of Table~\ref{tab:main}; their thresholds are fitted per block, so they can sit slightly off the pooled curve. Dotted line: accepting every candidate. (b) F1 against the share of candidates accepted, which compares the models at equal review workload whatever their calibration; the pair-conditioned model is ahead of or level with the sentence-level one at every share except 93\% to 96\%, where it trails by at most $0.003$. Values at six thresholds: Appendix~\ref{app:curve}.}
+\label{fig:curves}\label{fig:threshold}
+\end{figure}
+
+Table~\ref{tab:main} gives the comparison. On \bench{}, telling the model which pair a candidate is about raises
+per-seed AUPRC from $0.867 \pm 0.006$ to $0.942 \pm 0.007$ and, at block-held-out thresholds, F1
+from $0.790$ to $0.882$ (precision $0.752$ to $0.869$, recall $0.833$ to $0.896$). On decision
+correctness the pair-conditioned model fixes 74 items and breaks 23, McNemar
+$p = 3.8\times10^{-7}$. The advantage does not depend on calibration: compared at equal review
+workload, the pair-conditioned model is ahead by $0.07$ to $0.09$ F1 whenever 50\% to 70\% of candidates are accepted, and the curves come within $0.01$ F1 of each other only when fewer than 10\% or more than 85\% of candidates are accepted (Figure~\ref{fig:curves}b; shares at six thresholds in Appendix~\ref{app:curve}).
+
+Adding the relation term gives no significant further gain. The triple-conditioned model's AUPRC is level with the pair-conditioned model's ($0.945$ against $0.942$), and on decision correctness it fixes 21 items and breaks 30 ($p = 0.26$).
+
+\subsection{Results on BioRED}
+\label{sec:biored}
+
+The result (Table~\ref{tab:main}, right; full table in Appendix~\ref{app:biored}) reproduces the
+one on \bench{}. Conditioning on the pair raises AUPRC from $0.738$ to $0.843$ and F1 from $0.718$
+to $0.817$, fixing 2{,}642 items and breaking 1{,}064. Marking the two mentions in the passage, the
+standard relation extraction input \citep{zhou2022improved}, adds nothing to the pair query
+($p = 0.08$).
+
+On BioRED's standard document-level metric the pair-conditioned model reaches an entity-pair F1 of
+$67.1$, against $57.5$ for the sentence-level one. Systems that read the whole abstract reach
+$74.1$ to $75.3$ (PubMedBERT, BioREx and BioREDirect; \citealp{lai2023biorex,lai2025bioredirect})
+and zero-shot GPT-4 $42.9$ \citep{islamaj2024overview}. Much of that gap is structural: a quarter of
+the related pairs are never co-mentioned in one sentence, which caps any sentence-scope verifier at
+recall $0.749$. Given the whole abstract, the same model and recipe reach $67.0$ (recall $0.697$,
+precision $0.646$). The published systems also classify entity pairs, so the remaining gap comes from their document-level modelling, which is a separate problem from ours.
+
+\subsection{Gain by number of taxa in the passage}
+\label{sec:where}
+
+\begin{figure}[t]\centering
+\includegraphics[width=\columnwidth]{fig/fig3_gain_by_taxa.pdf}
+\caption{AUPRC by the number of entities the passage names (three-checkpoint ensembles). \bench{}: distinct taxa that TaxoNERD~\citep{leguillarme2022taxonerd} finds in the passage; an argument ``is not a taxon'' when TaxoNERD does not recognise it there. BioRED: gold-annotated concepts in the sentence; BioRED has no relation term, so there is no triple-conditioned model. Triple-conditioned markers sit just below their row so they do not hide the pair-conditioned ones. Grey bars and the $\Delta$ column give the gain from adding the pair (pair-conditioned minus sentence-level). Parentheses give the number of candidates and the share of positives. Thin lines on the rows under 100 candidates are bootstrap 95\% intervals (2{,}000 resamples of candidates, fixed seed; values released with the code). Exact values: Appendices~\ref{app:where} and~\ref{app:biored}.}
+\label{fig:where}
+\end{figure}
+
+Figure~\ref{fig:where} locates the gain; it is the most direct test of the argument. On passages
+that name three or more taxa, adding the pair raises AUPRC by $0.098$; on passages naming two or fewer taxa, by $0.043$. Splitting by argument shows where this smaller gain comes from: the candidates come from automatic matching, and 41\% of the 437 have one ``taxon'' that is a string
+TaxoNERD does not recognise as an organism in the passage (an organ, an author's name, a vernacular
+term). Where both arguments are recognised taxa and the passage names no third one, the case in which the sentence question and the pair question nearly coincide, the
+pair query adds $+0.026$ on 33 items; where an argument is not a taxon it adds $+0.049$, and $+0.180$
+when the passage also names others. The pair query therefore does two things. It tells the model which pair to judge, and it lets the model check that both arguments are organisms. BioRED, whose entities are gold-annotated, isolates the first: on candidates from
+sentences that name only two concepts the two models are indistinguishable ($0.909$ against $0.902$;
+per seed $0.899$--$0.919$ against $0.892$--$0.914$), while on those from sentences naming more, which
+are 97\% of the candidates, conditioning adds $+0.120$. By source block, the pair query raises
+AUPRC from $0.835$ to $0.944$ on \textsc{Test299}, whose passages name the most taxa, from $0.964$
+to $0.982$ on \textsc{Biotx100}, and from $0.551$ to $0.575$ on the 41-row \textsc{Reject50}, too
+small to rank the models (Appendices~\ref{app:where} and~\ref{sec:recall}).
+
+\subsection{Zero-shot language models}
+\label{sec:zeroshot}
+
+\begin{figure}[t]\centering
+\includegraphics[width=\columnwidth]{fig/fig_scaling.pdf}
+\caption{Zero-shot Qwen models~\citep{qwen2025technical} asked the sentence question (dashed, open squares) or the pair question (solid, filled circles) on (a) the 437 expert-graded candidates of \bench{} and (b) a 3{,}000-candidate BioRED sample. Dotted: the trained 110M models on the same rows (three-checkpoint ensembles); grey: base rate. The x-axis spaces model sizes evenly. From 1.7B on, the pair question leads at every size, while answers to the sentence question change little with scale. $^*$Mixture of experts, placed by total size; the 32B model is the teacher. Qwen3.5-122B-A10B is a later release. Thin green line in (a): the triple question (\bench{} only), which matches or exceeds the pair question (Appendix~\ref{app:scaling}).}
+\label{fig:scaling}
+\end{figure}
+
+The formulation effect is not a property of small encoders (Figure~\ref{fig:scaling}; scores are
+$P(\textsc{yes})$, Appendix~\ref{app:prompts}). Asked the
+sentence question, the 32B teacher scores AUPRC $0.804$, below the 110M sentence-level
+student; asked about the pair, $0.960$. Its gap, $+0.156$, is twice the student's (the two questions also differ in their instructions; Limitations), and it sits in
+the same place: $+0.179$ on passages naming three or more taxa against $+0.107$ on the rest, where
+the student's is $+0.098$ against $+0.043$. The 110M pair-conditioned student, about 300 times smaller than its teacher, scores $0.14$ AUPRC higher than the teacher asked the sentence question. As with the student, the
+relation term adds nothing at this size ($0.964$ against $0.960$), although zero-shot models from
+1.7B to 30B-A3B do gain from it (Appendix~\ref{app:scaling}). From Qwen3-1.7B to Qwen3.5-122B-A10B \citep{qwen2026qwen35} the pair question leads at each size, by $+0.04$ to $+0.20$ AUPRC on
+\bench{} and $+0.11$ to $+0.30$ on BioRED, while the sentence question gains little with size. On
+BioRED the teacher, asked the sentence question, accepts 92\% of its sample (AUPRC $0.566$ at a base
+rate of $0.48$); asked about the pair, $0.813$, still behind the trained pair-conditioned model
+($0.860$ on the same sample). Against its teacher's labelling prompt ($0.964$) the pair-conditioned student gives up $0.021$
+AUPRC, of which distilling the teacher's probabilities recovers about a quarter
+(Appendix~\ref{app:soft}). In F1 it gives up almost nothing at block-held-out thresholds ($0.882$ against the teacher's $0.885$; the soft-label student reaches $0.883$).
+
+\subsection{Controls: query ablation, training data, encoder}
+\label{sec:res-ablation}
+
+Three controls locate the effect in the query. Degrading the trained triple-conditioned model's
+query at inference, weights and thresholds unchanged, shows which part of the query it uses: deleting both taxa
+drops the three-checkpoint ensemble's AUPRC from $0.948$ to $0.691$ against a base rate of $0.574$, and emptying the query gives
+$0.649$, while replacing or shuffling the relation, pair kept, moves it far less ($0.906$, $0.930$;
+Appendix~\ref{app:ablation}). The conditioned model does not need the corpus's contrast rows: a triple-conditioned
+model trained on the 20{,}000-row base sample alone reaches AUPRC $0.943 \pm 0.004$ (full corpus
+$0.945 \pm 0.005$) and block-held-out F1 $0.886$. The encoder is not the cause either: of seven alternative recipes
+screened on development data, the three that passed were scored once on test, none gains significantly on both
+benchmarks, and with every encoder trained in both formulations the pair query wins, by $+0.103$ to $+0.113$ AUPRC on BioRED and
+$+0.051$ to $+0.076$ on \bench{} (Appendix~\ref{app:encoders}).
+
+\subsection{Error analysis}
+\label{sec:errors}
+\label{sec:decomp}
+
+The pair-conditioned model's 34 false positives at its block-held-out operating point are not
+homogeneous: 24 come from passages naming three or more taxa, and 16 have an argument TaxoNERD does
+not recognise as a taxon. Read by hand, they sort into a few mechanisms (examples in
+Table~\ref{tab:examples}, Appendix~\ref{app:examples}; the per-row table is released):
+\emph{pair-binding}, where both taxa and the relation are correct but the relation's argument is a
+third organism; \emph{co-listing}, where the two taxa are members of one enumeration and the passage
+states no interaction between them; \emph{negation}, where the passage asserts the
+opposite; \emph{same organism}, where the two ``taxa'' are one organism named twice or an organism
+and its own clade; candidates whose relation term names no biotic interaction at all
+(\emph{relative to}, \emph{hybridization}, \emph{migration}); and \emph{entity} failures, where a
+taxon string is a taxonomic author, a place, an organ, or an adjective inside a pathogen's name
+(``\emph{avian} schistosomes'', which the pair-conditioned model already rejects).
+
+\paragraph{A bound on component-wise verification.}
+The pair-binding class limits a natural alternative architecture. Its members have both taxa
+correctly resolved and the correct relation; the error is a pairing made by retrieval that the passage does not state. A verifier
+that checks $s_1$, $r$ and $s_2$ separately, however good each check is, cannot see it. On the 97
+clean \textsc{Biotx100} candidates, where triple-level grades make the classes countable, 15 of the
+32 unsupported candidates are pair-binding failures (the rest: 9 entity, 8 predicate), a share of
+$0.47$, Clopper--Pearson $[0.29, 0.65]$. A component-wise verifier accepting a fraction $r$ of the
+65 supported triples therefore also accepts all 15, so its precision is at most $65r/(65r+15)$:
+$0.81$ at full recall, $[0.76, 0.88]$ across that interval. Only a model that reads the pair together with its passage can exceed this bound.
+
+\subsection{Fresh candidates}
+\label{sec:fresh}
+
+We also scored 100 candidates from outside \bench{}: two further batches of 50 from the same
+retrieval system, graded once at the pair level in the same expert curation as \textsc{Test299},
+32 of them positive (a base rate of $0.32$, against $0.574$ on the benchmark). None of their
+passages occurs in the benchmark or in the training corpus. All three models score well below their
+benchmark figures, and the sentence-level model is again last: AUPRC $0.665$ sentence-level,
+$0.785$ pair-conditioned and $0.765$ triple-conditioned (three-checkpoint ensembles). Unlike the
+benchmark's candidates, these were scored with the retrieval system's canonical names for the taxa
+and the relation, which for most of them differ from the passage's wording (\S\ref{sec:setting}),
+so the two conditioned models' figures are not directly comparable with their benchmark figures;
+the sentence-level model reads no query and is unaffected. With 32 positives the size of the drop
+is uncertain, but it suggests that the benchmark is easier than a live pool, so its absolute
+figures are likely to be optimistic.
+
+\section{Discussion and Conclusion}
+\label{sec:discussion}
+\label{sec:conclusion}
+
+\paragraph{Partial input and model size.}
+A sentence-level filter is a partial-input model in the sense of \S\ref{sec:related}, except that
+the input it lacks is the query the pipeline issued, so the remedy is to put that query into
+the input. Larger models do not make up for the missing input. From 1.7B to 122B, zero-shot Qwen models answer the pair
+question better at each size while their answers to the sentence question gain little, and a
+110M model asked about the pair ranks candidates better than the 32B teacher asked about
+the passage (\S\ref{sec:zeroshot}).
+
+\paragraph{Passages naming only two taxa.}
+The two questions coincide when a passage names only the candidate's two entities and both are
+what they claim to be: on BioRED sentences that name two concepts the two models are
+indistinguishable, and on \bench{} the gain is smallest where both arguments are recognised
+taxa and no third is named (\S\ref{sec:where}). Most of its positives come from passages that name
+more.
+
+\paragraph{Choosing an operating point.}\label{sec:opoint}
+The precision of the pair-conditioned model ranges from $0.761$ at $\tau = 0.01$ to $0.981$ at $\tau = 0.90$ (Appendix~\ref{app:curve}), so the right threshold depends on the use. Ingestion into a reference database calls for high precision, and assembling candidates for expert review calls for high recall. Reporting a score leaves this choice to the user \citep{geifman2017selective}.
+
+\paragraph{A practical configuration.}\label{sec:deploy}
+For use in a pipeline we recommend a variant of the pair-conditioned model that adds deterministic
+candidate rules and a head labelling the interaction's direction in four categories
+(Appendices~\ref{app:rules} and~\ref{app:deploy}). Its input and training labels also differ from
+those of the pair-conditioned model, so it lies outside the controlled comparison. It scores 32
+candidates per second on a CPU, and it can escalate the candidates it is least sure of to a
+zero-shot LLM (Appendix~\ref{app:cascade}).
+
+\paragraph{Errors made before verification.}
+Errors such as a wrong interaction term or a mis-resolved taxon arise during retrieval, before any verifier runs, and a model that reads the passage cannot see that the resolved taxon is not the one the passage names
+(Limitations). Direction needs its own gold (Appendix~\ref{sec:notfixed}).
+
+\paragraph{Other domains.}
+Any pipeline that proposes candidates by co-occurrence and filters them passage by passage gives
+every candidate from a passage the same answer; BioRED shows the remedy carrying over to genes, chemicals and diseases. For another pipeline, the first quantity to measure is the share of passages that name more than the candidate pair.
+
+\paragraph{Conclusion.}
+When candidates come from co-occurrence retrieval, the model that verifies them should see the
+candidate pair as well as the passage. A classifier that reads only the passage gives every pair in
+it the same answer, and 62\% of the interacting pairs in \bench{} come from passages naming
+three or more taxa. Giving the model the pair raises AUPRC from $0.867$ to $0.942$, with the largest
+gain on those passages. The effect replicates on BioRED and in zero-shot Qwen models from 1.7B to
+122B parameters. The verifier runs on a CPU, fast enough to score every candidate in the pool.
+
+\section*{Limitations}
+
+\paragraph{Benchmark size and annotation.}
+\bench{} has 437 expert-graded rows in three blocks, each graded once. Labels were adjudicated
+by a blind second annotation of 22 candidates: 11 on which two models (triple-conditioned and
+recommended, \S\ref{sec:deploy}) confidently disagreed with the gold, and 11 random controls. It
+kept every control label and changed 7; on the earlier labels the pair query raises AUPRC from
+$0.851$ to $0.918$. On the recall side (\textsc{Reject50}, Appendix~\ref{sec:recall}) the
+denominator is 11 positives.
+
+\paragraph{Rule selection.}
+Four of the eight candidate rules were selected after reading this benchmark's false positives
+(Appendix~\ref{app:rules}). The training-data criterion bounds how much that selection can have memorised
+the benchmark, but it does not remove it, and their effects should be read as optimistic until
+confirmed on candidates neither the rules nor their author have seen. These four reject at most one
+of the fresh candidates of \S\ref{sec:fresh}, too few to confirm or contradict them.
+
+\paragraph{Fresh candidates.}
+Scores drop on them (\S\ref{sec:fresh}).
+
+\paragraph{Pair-level evaluation.}
+Only \textsc{Biotx100} carries whole-triple gold. Evaluating at the pair level everywhere means a
+candidate with the right pair and a misbound relation counts as correct, so the comparison cannot
+credit the relation term with the cases it alone could catch; measuring those would need
+triple-level gold on the other two blocks.
+
+\paragraph{Document-level labels in BioRED.}
+A candidate is positive when the abstract relates the two concepts anywhere, so a co-mention
+in a sentence that does not state the relation counts as positive. Both models are trained and scored
+on the same noisy labels, so the comparison is controlled, but the absolute figures understate what
+either would reach against sentence-level gold.
+
+\paragraph{Prompt wording.}
+Beyond naming the pair, the zero-shot pair question on \bench{} (Appendix~\ref{app:prompts})
+asks the model to check that both strings name organisms in the passage and to reject a mere
+co-mention or an interaction each has with a third organism, and it omits the sentence question's
+examples of interactions (on BioRED its only added instruction is the co-mention clause), so part
+of its lead in \S\ref{sec:zeroshot} may come from this wording rather than from naming the pair. The
+trained models read no instructions and learn from the same labels; their inputs differ only by the
+pair and, for the triple-conditioned model, the relation term, so the controlled comparison of
+Table~\ref{tab:main} is unaffected.
+
+\paragraph{Teacher noise and pretraining exposure.}
+The training labels come from a prompted teacher wrong about one time in seven, and the student
+inherits that boundary; training on model-generated labels can degrade encoders
+\citep{lu2025feeding}. The passages are published MEDLINE text and the teacher is a pretrained
+model, so we cannot exclude that it saw them, and its labels may be optimistic for genuinely new
+literature.
+
+\paragraph{Upstream failures.}
+Of the 41 \textsc{Reject50} candidates, 27 carry an incorrect interaction term and 12
+a mis-resolved taxon, 10 of them both. Those fail before any verifier is consulted, and no change to
+the decision stage, ours included, addresses them.
+
+\paragraph{Single retrieval system and domain.}
+We study one retrieval system with one interaction vocabulary, on interactions between taxa in MEDLINE. The
+mechanism, a pair-agnostic decision over passages that name several organisms, is not specific to
+this pool, but we have not shown that other pools fail the same way.
+
+\bibliography{references}
+
+\appendix
+
+\section{Teacher prompts}
+\label{app:prompts}
+
+The three questions put to the 32B teacher and the other zero-shot models (\S\ref{sec:zeroshot},
+Appendix~\ref{app:scaling}), verbatim, at temperature 0 with thinking disabled; the score is the
+probability of \textsc{yes} among the \textsc{yes}/\textsc{no} alternatives of the first answer
+token. The triple question is the prompt that labelled the training corpus. On BioRED the sentence
+and pair questions name biomedical entities and relation types in place of organisms and biotic
+interactions, and there the pair question asks only whether the sentence states a relation between the two entities beyond a mere co-mention (their exact text is released with the code). Lines are wrapped for the page.
+
+\paragraph{Sentence question.}
+\begin{footnotesize}
+\begin{verbatim}
+You check sentences retrieved from the
+scientific literature for a
+biotic-interaction database.
+
+Sentence: <passage>
+
+Answer YES only if the sentence asserts
+a direct biological interaction between
+organisms (for example predation,
+parasitism, infection, herbivory,
+pollination, mutualism, symbiosis or
+disease transmission), and the
+interaction is not negated.
+
+Reply with exactly one word: YES or NO.
+\end{verbatim}
+\end{footnotesize}
+
+\paragraph{Pair question.}
+\begin{footnotesize}
+\begin{verbatim}
+You verify candidate biotic-interaction
+pairs extracted from scientific
+literature.
+
+Sentence: <passage>
+
+Candidate pair:
+  Entity 1: "<taxon 1>"
+  Entity 2: "<taxon 2>"
+
+Answer YES only if ALL of the following
+hold:
+ 1. Both entities are genuinely the
+    organisms referred to by those
+    surface strings in this sentence
+    (not a gene, protein, chemical,
+    author name, or a different
+    species).
+ 2. The sentence asserts a direct
+    biological interaction between these
+    two organisms (not merely a
+    co-mention, and not an interaction
+    each has with some third organism),
+    and the interaction is not negated.
+
+Reply with exactly one word: YES or NO.
+\end{verbatim}
+\end{footnotesize}
+
+\paragraph{Triple question (the labelling prompt).}
+\begin{footnotesize}
+\begin{verbatim}
+You verify candidate biotic-interaction
+triples extracted from scientific
+literature.
+
+Sentence: <passage>
+
+Candidate triple:
+  Entity 1: "<taxon 1>"
+  Relation: "<relation>"
+  Entity 2: "<taxon 2>"
+
+Answer YES only if ALL of the following
+hold:
+ 1. Both entities are genuinely the
+    organisms referred to by those
+    surface strings in this sentence
+    (not a gene, protein, chemical,
+    author name, or a different
+    species).
+ 2. The sentence asserts a direct
+    biological interaction between these
+    two organisms (not merely a
+    co-mention, and not an interaction
+    each has with some third organism).
+ 3. The stated relation is the correct
+    type of interaction between them, in
+    the stated direction, and is not
+    negated.
+
+Reply with exactly one word: YES or NO.
+\end{verbatim}
+\end{footnotesize}
+
+\section{Per-seed results}
+\label{app:seeds}
+
+Table~\ref{tab:perseed} gives the per-seed AUPRC behind the \bench{} means of Table~\ref{tab:main}.
+
+\begin{table}[t]\centering\footnotesize
+\setlength{\tabcolsep}{2.2pt}
+\begin{tabular}{lccc|ccc}
+\toprule
+ & \multicolumn{3}{c|}{AUPRC} & \multicolumn{3}{c}{F1, $\tau = 0.5$} \\
+seed & sent. & pair & triple & sent. & pair & triple \\
+\midrule
+1 & .871 & .946 & .948 & .634 & .804 & .859 \\
+2 & .868 & .946 & .947 & .708 & .772 & .864 \\
+3 & .860 & .935 & .939 & .670 & .802 & .852 \\
+\midrule
+mean & .867 & .942 & .945 & .671 & .793 & .858 \\
+sd   & .006 & .007 & .005 & .037 & .018 & .006 \\
+\bottomrule
+\end{tabular}
+\caption{Per-seed figures on the 437 \bench{} rows, order-free scoring. The body reports F1 of
+three-checkpoint ensembles at block-held-out thresholds; a fixed $\tau = 0.5$ is shown here only for
+the spread across seeds, not to compare the models, because the three models are calibrated
+differently, and a single shared threshold would favour one of them arbitrarily.}
+\label{tab:perseed}
+\end{table}
+
+\section{\texorpdfstring{Values behind Figures~\ref{fig:curves} and~\ref{fig:where}}{Values behind Figures 2 and 3}}
+\label{app:curve}
+\label{app:where}
+
+Table~\ref{tab:curve} gives the operating curves of Figure~\ref{fig:curves} at six thresholds, and
+Table~\ref{tab:where} the AUPRC values of Figure~\ref{fig:where}, with AUPRC by source block.
+
+\begin{table}[t]\centering\small
+\setlength{\tabcolsep}{1.9pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{rcccc|cccc|cccc}
+\toprule
+ & \multicolumn{4}{c|}{sentence} & \multicolumn{4}{c|}{pair} & \multicolumn{4}{c}{triple} \\
+$\tau$ & P & R & F1 & Acc. & P & R & F1 & Acc. & P & R & F1 & Acc. \\
+\midrule
+0.01 & .709 & .920 & .801 & .746 & .761 & .976 & .855 & .737 & .740 & .940 & .828 & .730 \\
+0.04 & .782 & .817 & .799 & .600 & .815 & .948 & .877 & .668 & .811 & .924 & .864 & .654 \\
+0.10 & .819 & .737 & .776 & .517 & .854 & .908 & .880 & .611 & .845 & .912 & .877 & .620 \\
+0.25 & .861 & .693 & .768 & .462 & .911 & .853 & .881 & .538 & .903 & .849 & .875 & .540 \\
+0.50 & .886 & .526 & .660 & .341 & .940 & .689 & .795 & .421 & .942 & .777 & .852 & .474 \\
+0.90 & .930 & .159 & .272 & .098 & .981 & .422 & .591 & .247 & .982 & .637 & .773 & .373 \\
+\bottomrule
+\end{tabular}}
+\caption{Values behind Figure~\ref{fig:curves}: the three models' operating curves on all 437 rows,
+three-checkpoint ensembles; Acc.\ is the share of the 437 candidates the model accepts at $\tau$. Rows show the shape; the reported operating points are those of
+Table~\ref{tab:main}.}
+\label{tab:curve}
+\end{table}
+
+\begin{table}[t]\centering\small
+\setlength{\tabcolsep}{3.4pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lrcccc}
+\toprule
+Candidates & $n$ & Pos. & Sentence & Pair & Triple \\
+\midrule
+passage names $\le 2$ taxa & 161 & 0.590 & 0.896 & \textbf{0.939} & 0.930 \\
+passage names $\ge 3$ taxa & 276 & 0.565 & 0.857 & 0.955 & \textbf{0.963} \\
+\midrule
+both arguments are taxa, $\le 2$ & 33 & 0.636 & 0.958 & \textbf{0.984} & 0.976 \\
+both arguments are taxa, $\ge 3$ & 227 & 0.577 & 0.891 & 0.975 & \textbf{0.982} \\
+an argument is not a taxon, $\le 2$ & 128 & 0.578 & 0.876 & \textbf{0.925} & 0.915 \\
+an argument is not a taxon, $\ge 3$ & 49 & 0.510 & 0.628 & 0.808 & \textbf{0.839} \\
+\midrule
+\textsc{Test299}  & 299 & 0.548 & 0.835 & 0.944 & \textbf{0.951} \\
+\textsc{Biotx100} &  97 & 0.784 & 0.964 & \textbf{0.982} & 0.973 \\
+\textsc{Reject50} &  41 & 0.268 & 0.551 & 0.575 & \textbf{0.675} \\
+\bottomrule
+\end{tabular}}
+\caption{Exact values of Figure~\ref{fig:where} (\bench{} rows) and AUPRC by source block; all
+values are AUPRC of three-checkpoint ensembles, and Pos.\ is the share of positives in the row, the AUPRC of a random ranking. Taxa are counted as distinct mentions found in the passage by
+TaxoNERD \citep{leguillarme2022taxonerd} (\texttt{en\_ner\_eco\_biobert}); an argument ``is not a
+taxon'' when TaxoNERD does not recognise it in the passage. \textsc{Test299} passages name $5.1$
+taxa on average, \textsc{Biotx100} $2.6$ and \textsc{Reject50} $1.7$.}
+\label{tab:where}
+\end{table}
+
+\section{BioRED in full}
+\label{app:biored}
+
+Table~\ref{tab:biored} gives the BioRED comparison of \S\ref{sec:biored} in full: AUPRC by the
+number of concepts the sentence names (\S\ref{sec:where}), the entity-marker variant, and the
+zero-shot teacher on a 3{,}000-candidate sample (\S\ref{sec:zeroshot}).
+
+\begin{table}[t]\centering\small
+\setlength{\tabcolsep}{2.6pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+ & & & \multicolumn{2}{c}{AUPRC, sentences naming} & EP \\
+\cmidrule(lr){4-5}
+Model & AUPRC & F1 & 2 concepts & $\ge 3$ & F1 (\%) \\
+\midrule
+Sentence-level   & $0.738_{\pm .004}$ & 0.718 & \textbf{0.909} & 0.727 & 57.5 \\
+Pair-conditioned & $\mathbf{0.843}_{\pm .004}$ & \textbf{0.817} & 0.902 & \textbf{0.847} & \textbf{67.1} \\
+\quad + entity markers & $0.840_{\pm .003}$ & 0.815 & 0.907 & 0.844 & 66.5 \\
+\midrule
+\multicolumn{6}{l}{\emph{Zero-shot 32B teacher, 3{,}000-candidate sample}} \\
+Sentence question & 0.566 & 0.662 & 0.921 & 0.555 & n/a \\
+Pair question     & 0.813 & 0.766 & 0.958 & 0.799 & n/a \\
+\bottomrule
+\end{tabular}}
+\caption{BioRED, BioCreative VIII test set: 16{,}606 sentence-level candidates from 400 abstracts,
+$0.463$ positive, 538 from sentences naming two concepts. Headline rows repeat
+Table~\ref{tab:main}. AUPRC is the per-seed mean $\pm$ standard deviation over three seeds (columns
+by concept count: three-checkpoint ensembles); F1 is at the pre-specified threshold (mean of the
+checkpoints' development thresholds), the teacher's at its greedy answer. EP F1 is BioRED's
+document-level entity-pair F1, a pair scoring the maximum over the sentences that co-mention it.
+On the teacher's sample the trained models' three-checkpoint ensembles score $0.757$ and $0.860$. Pair-conditioned against
+sentence-level: 2{,}642 items fixed, 1{,}064 broken (McNemar $p = 5.9\times10^{-148}$).}
+\label{tab:biored}
+\end{table}
+
+\section{Zero-shot scaling}
+\label{app:scaling}
+
+\begin{table}[t]\centering\footnotesize
+\setlength{\tabcolsep}{3.2pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccccccc}
+\toprule
+ & \multicolumn{4}{c}{\bench{}, 437} & \multicolumn{3}{c}{BioRED, 3{,}000} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-8}
+Qwen3 & sent. & pair & triple & $\Delta$ & sent. & pair & $\Delta$ \\
+\midrule
+0.6B & 0.676 & 0.658 & 0.663 & $-0.018$ & 0.522 & 0.523 & $+0.000$ \\
+1.7B & 0.769 & 0.808 & 0.844 & $+0.039$ & 0.533 & 0.648 & $+0.115$ \\
+4B & 0.761 & 0.885 & 0.921 & $+0.124$ & 0.546 & 0.745 & $+0.199$ \\
+8B & 0.819 & 0.909 & 0.947 & $+0.090$ & 0.524 & 0.800 & $+0.275$ \\
+14B & 0.818 & 0.929 & 0.959 & $+0.112$ & 0.555 & 0.805 & $+0.250$ \\
+30B-A3B & 0.797 & 0.927 & 0.956 & $+0.130$ & 0.571 & 0.792 & $+0.221$ \\
+32B (teacher) & 0.804 & 0.960 & 0.964 & $+0.156$ & 0.566 & 0.813 & $+0.246$ \\
+\midrule
+\shortstack[l]{Qwen3.5-\\122B-A10B} & 0.788 & 0.985 & 0.984 & $+0.197$ & 0.519 & 0.820 & $+0.301$ \\
+\midrule
+trained, same rows & 0.871 & 0.947 & 0.948 & $+0.076$ & 0.757 & 0.860 & $+0.103$ \\
+\bottomrule
+\end{tabular}}
+\caption{AUPRC of zero-shot Qwen3 \citep{qwen2025technical} by size, asked the three questions of
+Appendix~\ref{app:prompts} (4-bit builds served locally, thinking disabled; the triple question in
+both argument orders, maxed). 30B-A3B is a mixture of experts with 3B active parameters;
+Qwen3.5-122B-A10B \citep{qwen2026qwen35}, a later release, is a mixture of experts with 8 of 256 experts active per token, run
+partly on the CPU. Base rates $0.574$ and $0.476$. Last row: the trained three-checkpoint ensembles
+on the same rows. $\Delta$: pair minus sentence question (last row: pair-conditioned minus sentence-level model).}
+\label{tab:scaling}
+\end{table}
+
+Table~\ref{tab:scaling} gives the zero-shot comparison of Figure~\ref{fig:scaling} in full, with the
+triple question added. Each model's score is $P(\textsc{yes})$ from its first answer token, and the
+triple question is the teacher's labelling prompt, asked in both argument orders and maxed like the
+trained triple-conditioned model. At block-held-out thresholds the 32B teacher's precision, recall
+and F1 are $0.654$, $0.948$ and $0.774$ asked the sentence question, $0.919$, $0.865$ and $0.891$
+asked the pair question, and $0.878$, $0.892$ and $0.885$ asked the triple question.
+
+At 0.6B the three questions sit close to the base rate ($0.66$--$0.68$ against $0.574$; $0.52$
+against $0.476$): at that size the model barely does the task, whatever it is asked. From 1.7B on,
+the pair question is ahead at each size on both benchmarks: by $+0.039$ AUPRC at 1.7B and by $+0.09$
+to $+0.20$ from 4B on ($+0.11$, then $+0.20$ to $+0.30$, on BioRED). The sentence question gains
+little with size ($0.76$--$0.82$ on \bench{} from 4B on; $0.52$--$0.57$ on BioRED throughout, near its
+base rate), so scale mostly improves the answer to the right question. The lead is not monotonic in
+size among the Qwen3 models, and it is largest for the 122B model: $+0.197$ on \bench{} and $+0.301$ on BioRED, where the 32B model's is $+0.246$. Asked the triple question, every Qwen3
+model from 1.7B to 30B-A3B scores above its answer to the pair question on \bench{}, while the
+0.6B, 32B and 122B models score level with it. Asked about the pair, the 122B model ranks the 437 candidates better
+than any trained model ($0.985$; the recommended model $0.970$, the pair-conditioned student
+$0.942$ per-seed mean, $0.947$ as an ensemble), which suggests that a stronger teacher would raise the students further, whereas soft
+labels and larger encoders raise them little (Appendices~\ref{app:soft} and~\ref{app:encoders});
+asked the sentence question, it scores $0.788$.
+
+\section{Soft-label distillation}
+\label{app:soft}
+
+\begin{table}[t]\centering\small
+\setlength{\tabcolsep}{2.8pt}
+\begin{tabular}{llcccc}
+\toprule
+ & & & & \multicolumn{2}{c}{AUPRC, taxa} \\
+\cmidrule(lr){5-6}
+Model & Target & AUPRC & F1 & $\le 2$ & $\ge 3$ \\
+\midrule
+Sentence & verdict & $0.867_{\pm .006}$ & 0.790 & 0.896 & 0.857 \\
+         & $P(\textsc{yes})$ & $0.873_{\pm .007}$ & 0.799 & 0.908 & 0.862 \\
+Pair     & verdict & $0.942_{\pm .007}$ & 0.882 & 0.939 & 0.955 \\
+         & $P(\textsc{yes})$ & $0.947_{\pm .003}$ & 0.883 & 0.944 & 0.957 \\
+Triple   & verdict & $0.945_{\pm .005}$ & 0.867 & 0.930 & 0.963 \\
+         & $P(\textsc{yes})$ & $0.951_{\pm .003}$ & 0.888 & 0.936 & 0.965 \\
+\bottomrule
+\end{tabular}
+\caption{The sentence-level, pair-conditioned and triple-conditioned models trained on the
+teacher's verdicts (the body's models) and on its probabilities, recipe and seeds unchanged. AUPRC
+is the per-seed mean $\pm$ standard deviation; F1 (block-held-out thresholds) and AUPRC by the
+number of taxa the passage names are those of three-checkpoint ensembles, as in
+Tables~\ref{tab:main} and~\ref{tab:where}. Per-seed AUPRC with soft targets: $.866/.879/.875$,
+$.951/.946/.945$ and $.952/.952/.948$. Against the verdict-trained model of the same format, the
+soft-target model fixes 13 items and breaks 7 (sentence-level), 13 and 14 (pair-conditioned), 19
+and 7 (triple-conditioned; McNemar $p = 0.26$, $1.0$, $0.03$).}
+\label{tab:soft}
+\end{table}
+
+The students learn from the teacher's verdicts. We re-queried the teacher for $P(\textsc{yes})$ on
+all 48{,}338 training rows (same prompt and inputs; its verdicts agree with the corpus labels on
+99.7\% of rows, and 24\% of the probabilities lie between $0.05$ and $0.95$) and trained the three
+models again against these soft targets with a soft cross-entropy, selecting checkpoints on the
+same hard-labelled development split. It is the only distillation variant we tried, scored once
+(Table~\ref{tab:soft}). Every model gains a little AUPRC ($+0.005$ to $+0.007$), the
+triple-conditioned model on every seed and with $0.021$ F1 ($p = 0.03$ before correcting for three
+comparisons); against the pair-conditioned model it is marginally ahead ($0.951$ against
+$0.947$; 25 items fixed, 21 broken, $p = 0.66$). The comparison is unchanged: the pair query lifts
+AUPRC from $0.873$ to $0.947$ (72 fixed, 28 broken, $p = 1.7\times10^{-5}$), by $+0.095$ on passages
+naming three or more taxa and $+0.036$ on the rest. Probabilities close about a quarter of the
+pair-conditioned model's distance to its teacher's $0.964$ ($0.016$ AUPRC, against $0.021$ with
+verdicts). The body keeps the verdict-trained models, on which every other analysis was run.
+
+\section{Query ablation}
+\label{app:ablation}
+
+\begin{table}[t]\centering\small
+\setlength{\tabcolsep}{4pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+Query given to the model & P & R & F1 & AUPRC \\
+\midrule
+Retrieved triple               & 0.842 & 0.892 & \textbf{0.867} & \textbf{0.948} \\
+Generic relation, pair kept    & 0.918 & 0.673 & 0.777 & 0.906 \\
+Relation shuffled across items & 0.900 & 0.721 & 0.801 & 0.930 \\
+Relation only, no taxa         & 0.833 & 0.020 & 0.039 & 0.691 \\
+Empty query                    & 1.000 & 0.036 & 0.069 & 0.649 \\
+\bottomrule
+\end{tabular}}
+\caption{Degrading segment~A of the trained triple-conditioned model at inference, weights and its
+own block-held-out thresholds unchanged; AUPRC of the three-checkpoint ensemble. Base rate $0.574$.
+Per-seed standard deviations on AUPRC are $\le 0.032$.}
+\label{tab:ablation}
+\end{table}
+
+Degrading the trained triple-conditioned model's query at inference, with weights and thresholds
+unchanged, shows which part of the query it uses (Table~\ref{tab:ablation}; \S\ref{sec:res-ablation}). Deleting both taxa
+collapses ranking from $0.948$ to $0.691$ against a base rate of $0.574$, and emptying the query
+entirely gives $0.649$; replacing or shuffling the relation, pair kept, moves ranking far less
+($0.906$, $0.930$): the model leans on the pair, which is what the pair-conditioned model already
+showed.
+
+The empty-query variant is not the sentence-level model: deprived of the query it was trained
+with, it does far worse ($0.649$) than a model trained without one ($0.867$); hence three trained
+models.
+
+\section{Encoders}
+\label{app:encoders}
+
+\begin{table}[t]\centering\footnotesize
+\setlength{\tabcolsep}{2.2pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccccccc}
+\toprule
+ & \multicolumn{3}{c}{BioRED, BC8 test} & \multicolumn{4}{c}{\bench{}, 437} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-8}
+Encoder & sent. & pair & EP F1 (\%) & sent. & pair & triple & pair F1 \\
+\midrule
+BiomedBERT-base  & 0.738 & 0.843 & 57.5/67.1 & 0.867 & 0.942 & 0.945 & 0.882 \\
+BiomedBERT-large & 0.741 & 0.843 & 57.6/67.4 & n/a & n/a & n/a & n/a \\
+BioLinkBERT-base & \textbf{0.743} & \textbf{0.855} & \textbf{57.9}/67.9 & \textbf{0.888} & 0.939 & 0.949 & 0.860 \\
+BioLinkBERT-large & 0.737 & 0.848 & 56.1/\textbf{68.2} & 0.881 & \textbf{0.949} & \textbf{0.951} & \textbf{0.896} \\
+\bottomrule
+\end{tabular}}
+\caption{The three formulations under the encoders that were scored on test, recipe otherwise that
+of \S\ref{sec:verifier}: AUPRC and EP F1 (sentence-level/pair-conditioned) as per-seed means over
+three seeds, and block-held-out F1 of three-checkpoint ensembles. BiomedBERT-large was not trained on the biodiversity arms
+(Appendix~\ref{sec:negative}). Against the base encoder's model of the same format, BioLinkBERT's
+pair-conditioned model fixes 621 BioRED items and breaks 537 (McNemar $p = 0.015$) and on \bench{} 19
+and 32 ($p = 0.093$); its sentence-level model on \bench{}, 42 and 20 ($p = 0.0077$). No
+BioLinkBERT-large model differs significantly from the base encoder's on \bench{} ($p \ge 0.23$).}
+\label{tab:encoders}
+\end{table}
+
+Besides the recipe of \S\ref{sec:verifier} we tried seven others on development data only: five
+epochs at learning rates $1$, $2$ and $3\times10^{-5}$, BiomedBERT-large at $1$ and
+$2\times10^{-5}$, and BioLinkBERT-base and -large, pretrained on PubMed with citation links
+\citep{yasunaga2022linkbert}. The three that beat the base recipe by $0.01$ development AUPRC or more
+on both splits (seed 1, pair-conditioned model) were scored once on the test sets: BiomedBERT-large
+at $2\times10^{-5}$ (Appendix~\ref{sec:negative}), and BioLinkBERT in its base size under the base
+recipe and in its large size (below). BioLinkBERT-base's development AUPRC is $0.910$ for the BioRED
+pair-conditioned model over three seeds, against $0.892$ for the base encoder and $0.905$ for
+BiomedBERT-large, and $0.852$ for the biodiversity pair-conditioned model on seed 1, then $0.843$ and
+$0.833$ on seeds 2 and 3. Its BioRED pair-conditioned model gains on every seed (AUPRC
+$0.853$--$0.858$ against $0.839$--$0.847$; EP F1 $67.7$--$68.0$ against $66.8$--$67.5$), the best
+sentence-scope AUPRC we have on BioRED (Table~\ref{tab:encoders}). On \bench{} its
+pair-conditioned model does not gain ($0.939 \pm 0.004$ against $0.942 \pm 0.007$; F1 $0.860$
+against $0.882$) while its sentence-level model does ($0.888$, F1 $0.816$ against $0.790$), so the
+formulation gap narrows to $+0.051$ AUPRC (53 items fixed, 37 broken, $p = 0.11$), still
+concentrated on passages naming three or more taxa ($+0.073$ against $+0.009$). On BioRED it widens,
+to $+0.113$.
+
+BioLinkBERT-large, at $2\times10^{-5}$ for three epochs like BiomedBERT-large, passed the same screen
+(development AUPRC $0.907$ on BioRED and $0.869$ on the biodiversity split, seed 1; three-seed means $0.903$ and
+$0.862$). Its pair-conditioned models gain a little on both benchmarks: on BioRED, AUPRC
+$0.848 \pm 0.009$ and EP F1 $68.2 \pm 0.7$ (seeds $67.7$--$68.9$, each above every base seed); on
+\bench{}, $0.949 \pm 0.003$ and F1 $0.896$. Neither gain is significant: against the base encoder's
+pair-conditioned model it fixes 652 BioRED items and breaks 653 ($p = 1.0$), and on \bench{} 28 and 22
+($p = 0.48$). Its other models, trained afterwards and scored once, complete the comparison: the
+sentence-level models reach $0.881$ on \bench{} and $0.737$ on BioRED (EP F1 $56.1$), the
+triple-conditioned model $0.951$, and the pair query again wins, by $+0.068$ on \bench{} (74 items
+fixed, 28 broken, $p = 8\times10^{-6}$; $+0.090$ on passages naming three or more taxa, $+0.026$ on
+the rest) and by $+0.111$ on BioRED. We keep the base encoder: BioLinkBERT-base does not help the
+pair-conditioned model on \bench{}, and BioLinkBERT-large's gains are not significant on either benchmark.
+
+\section{Recall on rejected candidates}
+\label{sec:recall}
+\textsc{Reject50} asks whether candidates an earlier filter rejected contain recoverable
+positives, and it is too small to rank the models: eleven positives, so one item moves recall by
+nine points. At block-held-out thresholds the sentence-level model recovers 9 of the 11 by
+re-admitting 13 of the 30 correct rejections (F1 $0.545$), the pair-conditioned model recovers 6
+while re-admitting 5 ($0.545$), and the triple-conditioned model recovers 8 while re-admitting 3
+($0.727$). We read only the qualitative point: the discarded candidates do contain recoverable
+interactions, and a model that reads the candidate finds them with fewer wrong
+re-admissions than one that reads only the passage.
+
+\section{Error examples}
+\label{app:examples}
+
+\begin{table*}[t]\centering\small
+\begin{tabular}{@{}llp{0.47\textwidth}@{}}
+\toprule
+Mechanism & Candidate triple & Passage (abridged) \\
+\midrule
+Pair-binding & (\emph{T.\ gondii}, parasite of, swine) &
+``The entero-pathogenic \emph{Cystoisospora suis}, a coccidian \textbf{parasite of swine} and close
+relative to \emph{Toxoplasma gondii} \ldots'' \\[1pt]
+Co-listing & (katydids, prey, beetles) &
+``\ldots\ remains were from insects \ldots\ (e.g.\ \textbf{beetles}, dragonflies, cockroaches, and
+female \textbf{katydids}), indicating that eavesdropping on prey signals is not the only
+prey-finding strategy used by this \emph{bat}.'' \\[1pt]
+Negation & (wheat, hosts, \emph{F.\ acuminatum}) &
+``\ldots\ \emph{F.\ acuminatum} in New Zealand was found only on \textbf{non-wheat hosts}.'' \\[1pt]
+Same organism & (\emph{P.\ chinensis}, pollinators, Chinese knotweed) &
+``\ldots\ potential pollinators of \textbf{Chinese knotweed (\emph{Persicaria chinensis})}.'' \\[1pt]
+Entity & (\textbf{Siberia}, migrating, birds) &
+``\ldots\ a portion of birds \textbf{migrating} from \textbf{Siberia} have common winter nesting
+areas.'' \\
+\bottomrule
+\end{tabular}
+\caption{One example of each mechanism among the pair-conditioned model's false positives. The
+relation's true argument is italicised where it is not the queried taxon; in the entity case a
+place name was matched as a taxon.}
+\label{tab:examples}
+\end{table*}
+
+The examples illustrate the mechanisms of \S\ref{sec:errors}, one each (Table~\ref{tab:examples}).
+
+\section{Entity disambiguation and direction}
+\label{sec:notfixed}
+
+\paragraph{Taxonomy gate.}
+The natural remedy for entity errors is to gate candidates on taxonomic validity. Against the Open
+Tree Taxonomy \citep{rees2017opentree} such a gate catches 1 of the 32 unsupported \textsc{Biotx100}
+candidates and discards 5 of the 65 supported ones. This is because \emph{Illiger},
+Dikarya, \emph{copia} and \emph{sulla}, the surnames, clades, transposon families and vernacular
+names behind the entity failures, all resolve in the taxonomy. The failure is therefore one of disambiguation, of the kind species-name normalisers address \citep{gerner2010linnaeus}, which a validity gate cannot detect; and the gate's casualties are viruses, which are legitimate partners in this domain. The
+\emph{authority} and \emph{same\_organism} rules (Appendix~\ref{app:rules}) target the disambiguation
+directly and are the better instrument.
+
+\paragraph{Direction labels.}
+The benchmark's expert grading marks reversed triples as correct; we verified two by hand,
+(\emph{Breinlia}, host of, \emph{Rattus}) and (\emph{Demidospermus}, parasitized by,
+\emph{A.\ inermis}). No directional number on the benchmark would therefore measure the model rather
+than the convention, which is why direction is scored on its own annotation
+(Appendix~\ref{app:direction}). The supervision itself is also uneven: among the
+5{,}591 reversed training rows, the rate at which the teacher rejects a reversal is governed by the
+relation's surface string. Direction-encoding participles and prepositional forms are
+rejected at $0.51$--$0.70$ (\emph{affecting} $0.70$, \emph{affected by} $0.61$, \emph{parasite of}
+$0.57$), bare relational nouns at $0.04$--$0.10$ (\emph{host of} $0.08$, \emph{pollinators}
+$0.04$). Whether a training label encodes direction therefore depends on which string retrieval matched.
+
+\section{Candidate rules}
+\label{app:rules}
+
+\begin{table}[t]\centering\small
+\setlength{\tabcolsep}{3.6pt}
+\begin{tabular}{lccccc}
+\toprule
+System & P & R & F1 & fixed & broken \\
+\midrule
+Pair-conditioned          & 0.869 & 0.896 & 0.882 & n/a & n/a \\
+\quad + 7 rules           & 0.878 & 0.888 & \textbf{0.883} & 3 & 2 \\
+\quad + 8 rules           & \textbf{0.887} & 0.876 & 0.882 & 6 & 5 \\
+\midrule
+Triple-conditioned        & 0.842 & 0.892 & 0.867 & n/a & n/a \\
+\quad + 7 rules           & 0.860 & 0.880 & 0.870 & 6 & 3 \\
+\quad + 8 rules           & \textbf{0.883} & 0.869 & \textbf{0.876} & 13 & 6 \\
+\bottomrule
+\end{tabular}
+\caption{Deterministic candidate rules applied before the model's decision, all 437 rows,
+three-checkpoint ensembles at block-held-out thresholds. ``Fixed'' and ``broken'' are relative to
+the same model without rules. McNemar: $p = 1.00$ and $1.00$ on the pair-conditioned model, $0.50$
+and $0.17$ on the triple-conditioned model.}
+\label{tab:rules}
+\end{table}
+
+Several error mechanisms of \S\ref{sec:errors} are questions about the candidate rather than the
+passage (whether two strings name one organism, whether a word is a surname, whether
+\emph{relative to} is an interaction), and a classifier handles them poorly. We answer them with
+eight deterministic rejection rules, applied to the candidate before the verifier decides, each
+targeting one of those mechanisms. \emph{same\_organism}
+(apposition of a common and a scientific name, or identical forms), \emph{own\_clade} (an adjacent
+clade annotation such as ``(Acari: Prostigmata)''), and \emph{authority} (a taxonomic author parsed
+as a taxon) detect the same-organism and entity classes. \emph{non\_biotic\_relation} rejects
+phylogenetic, comparative and biogeographic relation terms; \emph{negated} rejects the two
+negation forms whose scope provably contains one of the pair (``non-$s$ hosts'', ``no infections
+with \ldots\ $s$''); \emph{not\_an\_organism} rejects organs and syndromes; \emph{pathogen\_modifier}
+rejects an adjective that only ever occurs inside a pathogen's name; and \emph{co\_listed} rejects
+two taxa that are conjuncts of one dependency-parsed list not governed by an interaction noun
+(``interactions between $A$ and $B$'' is kept).
+
+Table~\ref{tab:rules} gives their effect on both models. On the pair-conditioned model they raise
+precision by $0.009$ to $0.018$ and lower recall by $0.008$ to $0.020$, F1 unchanged ($p = 1.00$): of its 34
+false positives they catch 6, because a model told which pair it is judging already rejects most of
+what they target. On the triple-conditioned model they do more (precision $0.842 \to 0.883$,
+$p = 0.17$). Both are upper estimates, since half the rules were chosen with this benchmark's errors
+in view (below); their main practical benefit is transparency, because each rejection names its
+rule.
+
+\paragraph{Validation.}
+No rule has a parameter fitted to evaluation labels, but rules can still be fitted by choice,
+and four of these (\emph{non\_biotic\_relation}, \emph{negated}, \emph{not\_an\_organism} and
+\emph{pathogen\_modifier}) were written after reading the false positives of \S\ref{sec:errors}. To
+keep their selection from simply memorising the benchmark, every rule had to pass a criterion fixed
+before it was evaluated: on the 42{,}747 training rows in retrieved argument order, at least 85\% of
+the candidates it rejects must be teacher-negative, matching the teacher's own accuracy. Two first drafts failed it and were
+narrowed on training data alone (a general negation cue fired on ``without affecting the host'', and
+a role-noun list rejected ``viruses'' and ``fungi'', which are legitimate coarse taxa), and the
+final rules reject teacher-negatives at $0.88$ to $1.00$ (\emph{co\_listed}, which needs a dependency
+parse, on a fixed 6{,}000-row sample). The rules were then frozen, recorded by hash, and evaluated
+once.
+
+\section{The recommended configuration}
+\label{app:deploy}
+
+\begin{table}[t]\centering\small
+\setlength{\tabcolsep}{3.6pt}
+\begin{tabular}{lrcc}
+\toprule
+Expert-graded label & $n$ & answered & correct \\
+\midrule
+forward or reverse     & 84 & 62 (74\%) & 55 of 62 (0.887) \\
+undecidable (``?'')    & 12 & n/a & 9 left \textsc{Uncertain} \\
+bidirectional          &  1 & n/a & 1 \textsc{Bidirectional} \\
+\bottomrule
+\end{tabular}
+\caption{The recommended model's four-way direction output against 97 expert-graded direction
+labels. ``Answered'' counts \textsc{Forward} or \textsc{Reverse}; the rest are \textsc{Uncertain}.
+The abstention level ($0.60$) was chosen by the expert after seeing this set's coverage curve, so
+the figures are optimistic.}
+\label{tab:direction}
+\end{table}
+
+The model we recommend for use (\S\ref{sec:deploy}) lies outside the controlled comparison. It is
+one 110M-parameter model with two heads, and it differs from the pair-conditioned model of
+\S\ref{sec:verifier} in three respects adopted during development: it gives the two taxa in
+alphabetical order, so the input is identical whichever way round retrieval presents the pair; it
+marks them in place in the passage (\texttt{@}\ldots\texttt{@}, \texttt{\#}\ldots\texttt{\#})
+rather than only naming them in segment~A; and its training labels are the teacher's pair-level
+judgments. Its interaction threshold, $0.5$, was set before evaluation and never tuned. On the 437
+candidates it reaches AUPRC $0.970$ and F1 $0.915$ (precision $0.873$, recall $0.960$), and with the
+candidate rules of Appendix~\ref{app:rules} it reaches precision $0.888$, recall $0.948$ and F1
+$0.917$ (5 items fixed, 3 broken, $p = 0.72$).\footnote{The \emph{co\_listed} rule is omitted from
+this configuration: on this model's accept set it removes one false positive and three
+true ones.} It scores $32.3$ candidates per second on eight CPU threads, measured with both heads.
+Escalating the $30\%$ of candidates nearest its threshold to a zero-shot Qwen3.5-122B-A10B raises its
+precision with the rules from $0.888$ to $0.962$ at recall $0.912$ (Appendix~\ref{app:cascade}).
+
+\paragraph{Direction head.}\label{app:direction}
+The second head reports the interaction's \emph{direction} in four categories. \textsc{Forward} and
+\textsc{Reverse} say which taxon acts on the other; they come from a direction score that is exactly
+antisymmetric in the two marked taxa, and are reported only when it is confident, otherwise the
+answer is \textsc{Uncertain}. \textsc{Bidirectional} is assigned when the relation is mutual by
+definition (mutualism, symbiosis, competition, co-infection, \emph{interacts with}), as listed in a
+relation-polarity lexicon derived from the Relation Ontology; for those, neither taxon is the subject
+and the model is not asked. The benchmark's expert grading scores reversed triples as correct
+(Appendix~\ref{sec:notfixed}), so direction is evaluated on 97 separately expert-graded candidates
+(Table~\ref{tab:direction}): the model answers 74\% of the directional ones, correctly on $0.887$ of
+those, an optimistic figure since the abstention level was chosen on that set.
+
+\section{Escalating uncertain candidates to the teacher}
+\label{app:cascade}
+
+\begin{table}[t]\centering\footnotesize
+\setlength{\tabcolsep}{2.6pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{rrcccccc}
+\toprule
+ & & \multicolumn{3}{c}{Qwen3-32B} & \multicolumn{3}{c}{Qwen3.5-122B-A10B} \\
+\cmidrule(lr){3-5}\cmidrule(lr){6-8}
+Band & LLM calls & P & R & F1 & P & R & F1 \\
+\midrule
+0\% & 0 & 0.888 & 0.948 & 0.917 & 0.888 & 0.948 & 0.917 \\
+10\% & 44 & 0.908 & 0.940 & 0.924 & 0.912 & 0.944 & 0.928 \\
+20\% & 87 & 0.920 & 0.920 & 0.920 & 0.932 & 0.924 & 0.928 \\
+30\% & 131 & 0.950 & 0.912 & 0.931 & 0.962 & 0.912 & 0.937 \\
+50\% & 218 & 0.964 & 0.849 & 0.903 & 0.981 & 0.841 & 0.906 \\
+100\% & 437 & 0.960 & 0.773 & 0.857 & 0.984 & 0.757 & 0.856 \\
+\bottomrule
+\end{tabular}}
+\caption{The recommended model with its candidate rules keeps its own decision except on the band of
+candidates whose score lies nearest its threshold, which take a zero-shot LLM's answer to
+the pair question (Qwen3-32B, the teacher, or Qwen3.5-122B-A10B); 437 rows. A rule rejection is final.
+Band $0\%$ is the recommended model alone, $100\%$ the LLM alone (with the rules).}
+\label{tab:cascade}
+\end{table}
+
+The recommended model is fast and recall-oriented, and the zero-shot teacher, asked about the pair,
+is precise but slow (Appendix~\ref{app:scaling}). Table~\ref{tab:cascade} combines them: the model
+decides every candidate, and those it is least sure of (a fixed fraction, nearest its threshold) are
+re-decided by a zero-shot LLM. Escalating $30\%$ to Qwen3.5-122B-A10B raises precision from $0.888$ to
+$0.962$ at recall $0.912$, removing 21 of the 30 false positives; the model alone reaches that
+precision only at $\tau = 0.99$, where recall falls to $0.745$. Against the model alone the
+decisions are not significantly better on these 437 rows (25 items fixed, 13 broken,
+McNemar $p = 0.07$; with Qwen3-32B, 22 and 13, $p = 0.18$): the gain lies in the operating point, with more recall at a given precision, while accuracy at the model's own threshold does not improve significantly. We report the band at six settings and do not choose one. Its cost is set by the
+teacher's speed: escalating $30\%$ of the 175{,}588-candidate pool means about 53{,}000 calls, under
+a day on one A100 for Qwen3.5-122B-A10B (1.4\,s per call with part of it on the CPU) and less for the 32B.
+
+\section{Artifacts and compute}
+\label{app:artifacts}
+
+The training recipe of \S\ref{sec:verifier} is AdamW at learning rate $2\times10^{-5}$ and weight
+decay $0.01$, a linear schedule with 10\% warm-up, batch size 32, inputs of at most 256 wordpieces,
+three epochs and gradient clipping at 1.0; Appendix~\ref{app:encoders} lists the alternatives we
+screened. The encoders are BiomedBERT-base
+(\texttt{microsoft/\allowbreak BiomedNLP-\allowbreak BiomedBERT-\allowbreak base-\allowbreak uncased-\allowbreak abstract-\allowbreak fulltext})
+and -large (MIT licence) and BioLinkBERT-base and -large (Apache 2.0); the zero-shot models are Qwen3 0.6B--32B and Qwen3.5-122B-A10B \citep{qwen2026qwen35} (Apache 2.0), run locally through
+Ollama; taxon mentions are counted with TaxoNERD (MIT). BioRED and its BioREDirect directionality
+release are public NCBI resources, used as distributed. Everything ran on one NVIDIA A100 (80\,GB):
+an encoder run takes between two and fifteen minutes, and the whole study took about 50 GPU-hours,
+most of them LLM inference for labelling the corpus and for the zero-shot rows.
+
+\section{Negative results}
+\label{sec:negative}
+
+\begin{table}[ht]\centering\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{0.245\columnwidth}>{\raggedright\arraybackslash}p{0.265\columnwidth}@{}}
+\toprule
+Intervention & Benefit & Drawback \\
+\midrule
+Taxon-validity gate & 1 of 32 unsupported caught & $-5/65$ supported; rejects viruses \\
+Self-distillation$^\dagger$ & none & $-0.001$ P, $-0.008$ F1 \\
+6-layer compression$^\dagger$ & $1.9\times$ CPU throughput & $-0.088$ precision \\
+Corpus signal-matching$^\dagger$ & none & $-0.059$ AUPRC \\
+Rule-family training data$^\dagger$ & none & AUPRC $+0.005$ to $-0.037$ \\
+BiomedBERT-large & $+0.013$ dev AUPRC (BioRED pair) & none on test; $3\times$ parameters \\
+\bottomrule
+\end{tabular}
+\caption{Six plausible design choices whose drawbacks outweighed their benefits in our measurements. $^\dagger$Measured under an earlier
+version of the evaluation; deltas are directions only (see text). The last row compares per-seed means.}
+\label{tab:negative}
+\end{table}
+
+Table~\ref{tab:negative} collects interventions that did not help, because each is a plausible first
+thing to try. Self-distillation at equal capacity is null, suggesting the teacher's knowledge is
+already saturated in the student. Compressing to six layers nearly doubles CPU throughput, which this setting does not need, and lowers precision by $0.088$. Reweighting the corpus toward the signal distribution of the retrieval
+pool lowered AUPRC by $0.059$. The fifth row is the most informative. Before the candidate rules existed, we
+turned the same mechanisms into training data (synthetic negatives for the same-organism,
+own-clade and authority classes, and in a second variant for co-listing) and retrained. The first
+variant left AUPRC unchanged within seed noise and the second lowered it by $0.037$. For properties of the candidate itself, rules worked better than extra training data. Deltas in
+rows two to five were measured under an earlier version of the evaluation and are given as
+directions. The last row is one of the three recipes of \S\ref{sec:res-ablation} that passed the
+development screen (the others are in Appendix~\ref{app:encoders}): BiomedBERT-large raises the
+BioRED pair-conditioned model's development AUPRC from $0.892$ to $0.905$ (three-seed means), but on
+the BC8 test set the pair-conditioned model scores $0.843 \pm 0.005$ against $0.843 \pm 0.004$, F1
+$0.814$ against $0.817$, EP F1 $67.4 \pm 0.4$ against $67.1 \pm 0.3$, and the sentence-level model
+$0.741$ against $0.738$; the pair query's gain is unchanged ($+0.103$ against $+0.105$ AUPRC). It was
+not trained on all biodiversity arms, since its BioRED test result could not change the choice.
+For the whole-abstract BioRED model of \S\ref{sec:biored} we also tried, on development data only
+(seed 1), eight epochs instead of three, alone and with each concept's BioRED type in the query:
+development AUPRC $0.787$ and $0.791$ against $0.786$, inside the spread of the three-epoch seeds
+($0.765$--$0.786$), so neither was trained further or scored on the test set.
+
+\end{document}
