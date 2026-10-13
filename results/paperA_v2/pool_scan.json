@@ -1,0 +1,8 @@
+{
+  "rows": 175588,
+  "distinct_passages": 165325,
+  "distinct_triplet_keys": 115404,
+  "globi_terms": 591,
+  "passages_with_globi_term": 165037,
+  "share": 0.9982579767125359
+}

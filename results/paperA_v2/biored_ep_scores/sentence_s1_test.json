@@ -1,0 +1,13 @@
+{
+ "arm": "sentence",
+ "seed": 1,
+ "split": "test",
+ "model": "models/biored_bc8/sentence_s1",
+ "format": "sentence",
+ "max_len": 256,
+ "rows": 16606,
+ "orders": 1,
+ "unique_inputs": 2582,
+ "device": "cpu",
+ "finished": "2026-10-11 15:01:47"
+}

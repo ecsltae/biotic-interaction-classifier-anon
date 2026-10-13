@@ -1,0 +1,14 @@
+{
+  "model": "models/pair_only/biodiv_pair_only_s3",
+  "input_format": "pair_only",
+  "bench": "biodiv",
+  "order_free": true,
+  "biodiv": {
+    "file": "biodiv_pair_only_s3.npy",
+    "rows": 437,
+    "seconds": 9.4,
+    "device": "cpu",
+    "threads": 4,
+    "scored_at": "2026-10-11 04:47:20"
+  }
+}

@@ -1,0 +1,13 @@
+{
+ "arm": "sentence_linkbert",
+ "seed": 3,
+ "split": "test",
+ "model": "models/linkbert/biored_sentence_s3",
+ "format": "sentence",
+ "max_len": 256,
+ "rows": 16606,
+ "orders": 1,
+ "unique_inputs": 2582,
+ "device": "cpu",
+ "finished": "2026-10-11 17:35:08"
+}

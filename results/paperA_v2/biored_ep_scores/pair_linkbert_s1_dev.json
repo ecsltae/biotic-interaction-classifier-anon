@@ -1,0 +1,13 @@
+{
+ "arm": "pair_linkbert",
+ "seed": 1,
+ "split": "dev",
+ "model": "models/linkbert/biored_pair_s1",
+ "format": "pair",
+ "max_len": 256,
+ "rows": 3277,
+ "orders": 2,
+ "unique_inputs": 6554,
+ "device": "cpu",
+ "finished": "2026-10-11 17:36:06"
+}

@@ -1,0 +1,22 @@
+{
+  "model": "models/pair_only/biored_pair_only_s1",
+  "input_format": "pair_only",
+  "bench": "biored",
+  "order_free": true,
+  "test": {
+    "file": "biored_pair_only_s1_test.npy",
+    "rows": 16606,
+    "seconds": 201.8,
+    "device": "cpu",
+    "threads": 4,
+    "scored_at": "2026-10-11 03:54:24"
+  },
+  "dev": {
+    "file": "biored_pair_only_s1_dev.npy",
+    "rows": 3277,
+    "seconds": 41.9,
+    "device": "cpu",
+    "threads": 4,
+    "scored_at": "2026-10-11 03:55:06"
+  }
+}

@@ -1,0 +1,171 @@
+{
+ "figure": "fig_where.pdf",
+ "label": "fig:where",
+ "script": "paperA/fig/make_where_figure.py",
+ "what": "AUPRC of the three-checkpoint ensembles by how many entities the passage names; grey bar from the sentence-level to the pair-conditioned value",
+ "benchmark": {
+  "labels": "current",
+  "file": "data/evaluation/unified_test_set.csv",
+  "sha256": "c17cc4bec6ae6c04d0b3eb923167df4f6e3e874ea81833116200a10a0f9dc856",
+  "n": 437,
+  "positives": 251
+ },
+ "sources": {
+  "biodiversity": "results/paperA_v2/derived_biodiv.json strata.*.{n, auprc}",
+  "biodiversity_recomputed_from": [
+   "results/paperA_v2/S_biodiv_{sentence,pair,triple}.npy",
+   "clean_benchmark() labels",
+   "results/paperA_rebuild_2026-09-28/n_taxa_per_row.csv",
+   "results/paperA_v2/arg_recognition.csv"
+  ],
+  "biored": "results/paperA_v2/tables_biored.json {sentence,pair}.auprc_{2,ge3}_concepts, n_2_concepts, n_ge3_concepts"
+ },
+ "strata": {
+  "le2_taxa": {
+   "n": 161,
+   "auprc": {
+    "sentence": 0.8958039215023204,
+    "pair": 0.9388736790990173,
+    "triple": 0.9297047545563438
+   },
+   "gain_pair_vs_sentence": 0.043069757596696956
+  },
+  "both_taxa_le2": {
+   "n": 33,
+   "auprc": {
+    "sentence": 0.9581237838037928,
+    "pair": 0.9836309523809523,
+    "triple": 0.9759740259740259
+   },
+   "gain_pair_vs_sentence": 0.02550716857715951
+  },
+  "not_a_taxon_le2": {
+   "n": 128,
+   "auprc": {
+    "sentence": 0.8761193560335271,
+    "pair": 0.9250196698362432,
+    "triple": 0.9151966519017098
+   },
+   "gain_pair_vs_sentence": 0.04890031380271609
+  },
+  "ge3_taxa": {
+   "n": 276,
+   "auprc": {
+    "sentence": 0.8574930782015957,
+    "pair": 0.9554615126143068,
+    "triple": 0.9627783849438212
+   },
+   "gain_pair_vs_sentence": 0.09796843441271108
+  },
+  "both_taxa_ge3": {
+   "n": 227,
+   "auprc": {
+    "sentence": 0.8906043260725938,
+    "pair": 0.974652174077467,
+    "triple": 0.9817321368343129
+   },
+   "gain_pair_vs_sentence": 0.0840478480048732
+  },
+  "not_a_taxon_ge3": {
+   "n": 49,
+   "auprc": {
+    "sentence": 0.6283447151818964,
+    "pair": 0.8080591651264724,
+    "triple": 0.8385283027994096
+   },
+   "gain_pair_vs_sentence": 0.17971444994457597
+  }
+ },
+ "biored": {
+  "n": 16606,
+  "n_2_concepts": 538,
+  "n_ge3_concepts": 16068,
+  "sentence": {
+   "auprc_2_concepts": 0.9088395612165012,
+   "auprc_ge3_concepts": 0.7266974915598543
+  },
+  "pair": {
+   "auprc_2_concepts": 0.9022551667614866,
+   "auprc_ge3_concepts": 0.8471658391396524
+  },
+  "gain_pair_vs_sentence": {
+   "2_concepts": -0.006584394455014575,
+   "ge3_concepts": 0.12046834757979807
+  }
+ },
+ "rows_top_to_bottom": [
+  {
+   "group": "biodiversity",
+   "key": "le2_taxa",
+   "label": "2 or fewer (161)",
+   "n": 161,
+   "sentence": 0.8958039215023204,
+   "pair": 0.9388736790990173,
+   "triple": 0.9297047545563438
+  },
+  {
+   "group": "biodiversity",
+   "key": "both_taxa_le2",
+   "label": "both arguments are taxa (33)",
+   "n": 33,
+   "sentence": 0.9581237838037928,
+   "pair": 0.9836309523809523,
+   "triple": 0.9759740259740259
+  },
+  {
+   "group": "biodiversity",
+   "key": "not_a_taxon_le2",
+   "label": "an argument is not a taxon (128)",
+   "n": 128,
+   "sentence": 0.8761193560335271,
+   "pair": 0.9250196698362432,
+   "triple": 0.9151966519017098
+  },
+  {
+   "group": "biodiversity",
+   "key": "ge3_taxa",
+   "label": "3 or more (276)",
+   "n": 276,
+   "sentence": 0.8574930782015957,
+   "pair": 0.9554615126143068,
+   "triple": 0.9627783849438212
+  },
+  {
+   "group": "biodiversity",
+   "key": "both_taxa_ge3",
+   "label": "both arguments are taxa (227)",
+   "n": 227,
+   "sentence": 0.8906043260725938,
+   "pair": 0.974652174077467,
+   "triple": 0.9817321368343129
+  },
+  {
+   "group": "biodiversity",
+   "key": "not_a_taxon_ge3",
+   "label": "an argument is not a taxon (49)",
+   "n": 49,
+   "sentence": 0.6283447151818964,
+   "pair": 0.8080591651264724,
+   "triple": 0.8385283027994096
+  },
+  {
+   "group": "biored",
+   "key": "2_concepts",
+   "label": "2 (538)",
+   "n": 538,
+   "sentence": 0.9088395612165012,
+   "pair": 0.9022551667614866,
+   "triple": null
+  },
+  {
+   "group": "biored",
+   "key": "ge3_concepts",
+   "label": "3 or more (16,068)",
+   "n": 16068,
+   "sentence": 0.7266974915598543,
+   "pair": 0.8471658391396524,
+   "triple": null
+  }
+ ],
+ "checked_against_printed_values": true
+}

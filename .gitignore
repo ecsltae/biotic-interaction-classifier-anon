@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Data and models are not part of this package (see README)
+data/
+models/
+logs/
+results/*
+!results/paperA_v2/
+results/paperA_v2/llm/
+
+# LaTeX build files
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# Local leftovers
+manuscript/
+.env
+*.bak

@@ -1,0 +1,13 @@
+{
+ "arm": "doc_pair",
+ "seed": 1,
+ "split": "test",
+ "model": "models/biored_bc8_doc/pair_s1",
+ "format": "pair",
+ "max_len": 512,
+ "rows": 28330,
+ "orders": 1,
+ "unique_inputs": 28330,
+ "device": "cpu",
+ "finished": "2026-10-11 16:03:02"
+}
